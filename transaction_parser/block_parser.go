@@ -2,7 +2,7 @@ package transaction_parser
 
 import (
 	"context"
-	"das_parser_tool/chain/chain_ckb"
+	"das_parser_tool/chain"
 	"github.com/DeAccountSystems/das-lib/common"
 	"github.com/DeAccountSystems/das-lib/core"
 	"github.com/DeAccountSystems/das-lib/witness"
@@ -16,24 +16,24 @@ var log = mylog.NewLogger("transaction_parser", mylog.LevelDebug)
 type TransactionParser struct {
 	dasCore              *core.DasCore
 	mapTransactionHandle map[common.DasAction]FuncTransactionHandle
-	ckbClient            *chain_ckb.Client
+	ckbClient            *chain.Client
 	ctx                  context.Context
 	wg                   *sync.WaitGroup
 }
 
 type ParamsTransactionParser struct {
-	DasCore            *core.DasCore
-	CkbClient          *chain_ckb.Client
-	Ctx                context.Context
-	Wg                 *sync.WaitGroup
+	DasCore   *core.DasCore
+	CkbClient *chain.Client
+	Ctx       context.Context
+	Wg        *sync.WaitGroup
 }
 
 func NewTransactionParser(p ParamsTransactionParser) (*TransactionParser, error) {
 	bp := TransactionParser{
-		dasCore:            p.DasCore,
-		ckbClient:          p.CkbClient,
-		ctx:                p.Ctx,
-		wg:                 p.Wg,
+		dasCore:   p.DasCore,
+		ckbClient: p.CkbClient,
+		ctx:       p.Ctx,
+		wg:        p.Wg,
 	}
 	bp.registerTransactionHandle()
 	return &bp, nil
@@ -57,8 +57,8 @@ func (b *TransactionParser) RunParser(t string) {
 		if handle, ok := b.mapTransactionHandle[builder.Action]; ok {
 			// transaction parse by action
 			resp := handle(FuncTransactionHandleReq{
-				Tx:             tx.Transaction,
-				Action:         builder.Action,
+				Tx:     tx.Transaction,
+				Action: builder.Action,
 			})
 			if resp.Err != nil {
 				log.Error("action handle resp:", builder.Action, resp.Err.Error())

@@ -1,4 +1,4 @@
-package chain_ckb
+package chain
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	log = mylog.NewLogger("chain_ckb", mylog.LevelDebug)
+	log = mylog.NewLogger("chain", mylog.LevelDebug)
 )
 
 type Client struct {

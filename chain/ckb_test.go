@@ -1,4 +1,4 @@
-package chain_ckb
+package chain
 
 import (
 	"context"

@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"das_parser_tool/chain/chain_ckb"
+	"das_parser_tool/chain"
 	"das_parser_tool/config"
 	"das_parser_tool/transaction_parser"
 	"flag"
@@ -42,7 +42,7 @@ func txParser(c, t string) {
 	}
 
 	// ckb node
-	ckbClient, err := chain_ckb.NewClient(context.Background(), config.Cfg.Chain.CkbUrl, config.Cfg.Chain.IndexUrl)
+	ckbClient, err := chain.NewClient(context.Background(), config.Cfg.Chain.CkbUrl, config.Cfg.Chain.IndexUrl)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -71,14 +71,13 @@ func txParser(c, t string) {
 
 	// transaction parser
 	bp, err := transaction_parser.NewTransactionParser(transaction_parser.ParamsTransactionParser{
-		DasCore:            dc,
-		CkbClient:          ckbClient,
-		Ctx:                ctxServer,
-		Wg:                 &wgServer,
+		DasCore:   dc,
+		CkbClient: ckbClient,
+		Ctx:       ctxServer,
+		Wg:        &wgServer,
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
 	bp.RunParser(t)
 }
-

@@ -1,4 +1,4 @@
-package chain_ckb
+package chain
 
 import (
 	"fmt"
@@ -36,7 +36,6 @@ func (c *Client) GetHeaderByHash(hash types.Hash) (*types.Header, error) {
 		return res, nil
 	}
 }
-
 
 func (c *Client) GetNormalLiveCell(addr string, limit uint64) ([]*indexer.LiveCell, uint64, error) {
 	parseAddr, err := address.Parse(addr)
