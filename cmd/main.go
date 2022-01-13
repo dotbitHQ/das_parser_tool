@@ -6,11 +6,9 @@ import (
 	"das_parser_tool/config"
 	"das_parser_tool/transaction_parser"
 	"flag"
-	"fmt"
 	"github.com/DeAccountSystems/das-lib/core"
 	"github.com/scorpiotzh/mylog"
 	"sync"
-	"time"
 )
 
 var (
@@ -22,20 +20,23 @@ var (
 
 func main() {
 	c := flag.String("c", "./config/config.yaml", "config file")
-	t := flag.String("t", "", "transaction hash")
+	h := flag.String("t", "", "transaction hash")
+	j := flag.String("j", "", "transaction json")
 
 	flag.Parse()
-	if *t == "" {
-		log.Fatal("transaction hash is empty")
-	}
 
-	fmt.Println(*c, *t)
-	fmt.Println("----- start tx parser -----")
-	txParser(*c, *t)
-	fmt.Println("----- end tx parser -----")
+	log.Info(*c, *h, *j)
+	log.Info("----- start tx parser -----")
+	if *h != "" {
+		hashParser(*c, *h)
+	}
+	if *j != "" {
+		jsonParser(*c, *j)
+	}
+	log.Info("----- end tx parser -----")
 }
 
-func txParser(c, t string) {
+func hashParser(c, h string) {
 	// config
 	if err := config.InitCfg(c); err != nil {
 		log.Fatal(err)
@@ -64,9 +65,6 @@ func txParser(c, t string) {
 	if err = dc.InitDasSoScript(); err != nil {
 		log.Fatal(err)
 	}
-	dc.RunAsyncDasContract(time.Minute * 5)   // contract outpoint
-	dc.RunAsyncDasConfigCell(time.Minute * 3) // config cell outpoint
-	dc.RunAsyncDasSoScript(time.Minute * 7)   // so
 	log.Info("contract ok")
 
 	// transaction parser
@@ -79,5 +77,9 @@ func txParser(c, t string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	bp.RunParser(t)
+	bp.RunParser(h)
+}
+
+func jsonParser(c, j string) {
+
 }

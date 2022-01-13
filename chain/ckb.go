@@ -19,6 +19,7 @@ type Client struct {
 }
 
 func NewClient(ctx context.Context, ckbUrl, indexerUrl string) (*Client, error) {
+	log.Info("dial with indexer:", ckbUrl, indexerUrl)
 	rpcClient, err := rpc.DialWithIndexer(ckbUrl, indexerUrl)
 	if err != nil {
 		return nil, fmt.Errorf("init ckb client err:%s", err.Error())

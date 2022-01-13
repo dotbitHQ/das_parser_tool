@@ -13,11 +13,11 @@ var (
 )
 
 func InitCfg(configFilePath string) error {
-	log.Info("read from config：", configFilePath)
+	log.Info("read from config:", configFilePath)
 	if err := toolib.UnmarshalYamlFile(configFilePath, &Cfg); err != nil {
 		return fmt.Errorf("UnmarshalYamlFile err:%s", err.Error())
 	}
-	log.Info("config file：", toolib.JsonString(Cfg))
+	log.Info("config file:", toolib.JsonString(Cfg))
 	return nil
 }
 
@@ -32,5 +32,6 @@ type CfgServer struct {
 		DasContractArgs     string                            `json:"das_contract_args" yaml:"das_contract_args"`
 		DasContractCodeHash string                            `json:"das_contract_code_hash" yaml:"das_contract_code_hash"`
 		MapDasContract      map[common.DasContractName]string `json:"map_das_contract" yaml:"map_das_contract"`
+		CellDeps            map[string]string                 `json:"cell_deps" yaml:"cell_deps"`
 	} `json:"das_core" yaml:"das_core"`
 }

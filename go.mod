@@ -7,5 +7,4 @@ require (
 	github.com/nervosnetwork/ckb-sdk-go v0.101.3
 	github.com/scorpiotzh/mylog v1.0.9
 	github.com/scorpiotzh/toolib v1.1.3
-	github.com/shopspring/decimal v1.3.1
 )

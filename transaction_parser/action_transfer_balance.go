@@ -21,7 +21,7 @@ func (b *TransactionParser) ActionTransferBalance(req FuncTransactionHandleReq) 
 
 	log.Info("ActionTransferBalance:", req.Hash)
 
-	for i, v := range req.Tx.Outputs {
+	for _, v := range req.Tx.Outputs {
 		if v.Lock.CodeHash.Hex() != dasLock.ContractTypeId.Hex() {
 			continue
 		}
@@ -29,8 +29,7 @@ func (b *TransactionParser) ActionTransferBalance(req FuncTransactionHandleReq) 
 			continue
 		}
 
-		//TODO ActionTransferBalance Parser
-		_ = common.OutPoint2String(req.Hash, uint(i))
+		resp.ActionName = req.Action
 	}
 
 	return
