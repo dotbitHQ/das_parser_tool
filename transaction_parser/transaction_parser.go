@@ -83,7 +83,7 @@ func (t *TransactionParser) parserTransaction(transaction *types.Transaction) {
 	// Warn: if you need order json, use ordered map
 	out := map[string]interface{}{}
 	out["cell_deps"] = t.parserCellDeps(transaction.CellDeps)
-	out["cell_inputs"] = t.parserInputs(transaction.Inputs)
+	out["inputs"] = t.parserInputs(transaction.Inputs)
 
 	b, _ := json.Marshal(out)
 	log.Info(string(b))
@@ -154,14 +154,14 @@ func (t *TransactionParser) parserCellDeps(cellDeps []*types.CellDep) (cellDepMa
 	return
 }
 
-func (t *TransactionParser) parserInputs(cellInputs []*types.CellInput) (cellInputMaps []interface{}) {
-	for _, v := range cellInputs {
+func (t *TransactionParser) parserInputs(inputs []*types.CellInput) (inputMaps []interface{}) {
+	for _, v := range inputs {
 		res, err := t.ckbClient.GetTransactionByHash(v.PreviousOutput.TxHash)
 		if err == nil {
 			output := res.Transaction.Outputs[v.PreviousOutput.Index]
 			outputData := res.Transaction.OutputsData[v.PreviousOutput.Index]
 			if output.Type == nil {
-				cellInputMaps = append(cellInputMaps, map[string]interface{}{
+				inputMaps = append(inputMaps, map[string]interface{}{
 					"name":     "NormalCell",
 					"capacity": output.Capacity,
 					"lock":     t.convertOutputLockScript(output),
@@ -173,7 +173,7 @@ func (t *TransactionParser) parserInputs(cellInputs []*types.CellInput) (cellInp
 			if contractName, ok := core.DasContractByTypeIdMap[output.Type.CodeHash.Hex()]; ok {
 				if string(contractName) == "account-cell-type" {
 					accountId, _ := common.OutputDataToAccountId(outputData)
-					cellInputMaps = append(cellInputMaps, map[string]interface{}{
+					inputMaps = append(inputMaps, map[string]interface{}{
 						"name":       string(contractName),
 						"capacity":   output.Capacity,
 						"account_id": common.Bytes2Hex(accountId),
@@ -184,7 +184,7 @@ func (t *TransactionParser) parserInputs(cellInputs []*types.CellInput) (cellInp
 
 					continue
 				}
-				cellInputMaps = append(cellInputMaps, map[string]interface{}{
+				inputMaps = append(inputMaps, map[string]interface{}{
 					"name":     string(contractName),
 					"capacity": output.Capacity,
 					"type":     t.convertOutputTypeScript(output),
@@ -194,7 +194,7 @@ func (t *TransactionParser) parserInputs(cellInputs []*types.CellInput) (cellInp
 			}
 		}
 
-		cellInputMaps = append(cellInputMaps, map[string]interface{}{
+		inputMaps = append(inputMaps, map[string]interface{}{
 			"name": "unknown",
 		})
 	}
