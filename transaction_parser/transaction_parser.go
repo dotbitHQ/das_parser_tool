@@ -4,6 +4,7 @@ import (
 	"context"
 	"das_parser_tool/chain"
 	"das_parser_tool/config"
+	"encoding/json"
 	"github.com/DeAccountSystems/das-lib/common"
 	"github.com/DeAccountSystems/das-lib/core"
 	"github.com/DeAccountSystems/das-lib/witness"
@@ -40,24 +41,25 @@ func NewTransactionParser(p ParamsTransactionParser) (*TransactionParser, error)
 	return &bp, nil
 }
 
-func (b *TransactionParser) GetMapTransactionHandle(action common.DasAction) (FuncTransactionHandle, bool) {
-	handler, ok := b.mapTransactionHandle[action]
+func (t *TransactionParser) GetMapTransactionHandle(action common.DasAction) (FuncTransactionHandle, bool) {
+	handler, ok := t.mapTransactionHandle[action]
 	return handler, ok
 }
 
-func (b *TransactionParser) RunParser(h string) {
-	tx, err := b.ckbClient.GetTransactionByHash(types.HexToHash(h))
+func (t *TransactionParser) RunParser(h string) {
+	tx, err := t.ckbClient.GetTransactionByHash(types.HexToHash(h))
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Info("RunParser txHash:", h)
+	log.Info("RunParser txHash:", tx.Transaction.Hash)
+	log.Info("RunParser version:", tx.Transaction.Version)
 	log.Info("RunParser status:", tx.TxStatus.Status)
 
 	builder, err := witness.ActionDataBuilderFromTx(tx.Transaction)
 	if err != nil {
 		log.Fatal("ActionDataBuilderFromTx err:", err.Error())
 	}
-	handle, ok := b.mapTransactionHandle[builder.Action]
+	handle, ok := t.mapTransactionHandle[builder.Action]
 	if !ok {
 		log.Fatal("mapTransactionHandle does not exist", builder.Action)
 	}
@@ -73,30 +75,145 @@ func (b *TransactionParser) RunParser(h string) {
 
 	if resp.ActionName != "" {
 		log.Info("ActionName", resp.ActionName)
-		b.parserTransaction(tx.Transaction)
+		t.parserTransaction(tx.Transaction)
 	}
 }
 
-func (b *TransactionParser) parserTransaction(transaction *types.Transaction) {
-	var cellDeps []string
-	for _, v := range transaction.CellDeps {
+func (t *TransactionParser) parserTransaction(transaction *types.Transaction) {
+	// Warn: if you need order json, use ordered map
+	out := map[string]interface{}{}
+	out["cell_deps"] = t.parserCellDeps(transaction.CellDeps)
+	out["cell_inputs"] = t.parserInputs(transaction.Inputs)
+
+	b, _ := json.Marshal(out)
+	log.Info(string(b))
+}
+
+func (t *TransactionParser) parserCellDeps(cellDeps []*types.CellDep) (cellDepMaps []interface{}) {
+	for _, v := range cellDeps {
 		if cellDep, ok := config.Cfg.DasCore.CellDeps[v.OutPoint.TxHash.String()]; ok {
-			cellDeps = append(cellDeps, cellDep)
-		} else {
-			cellDeps = append(cellDeps, "unknown")
+			cellDepMaps = append(cellDepMaps, map[string]interface{}{
+				"name": cellDep,
+			})
+			continue
 		}
+		res, err := t.ckbClient.GetTransactionByHash(v.OutPoint.TxHash)
+		if err == nil {
+			output := res.Transaction.Outputs[v.OutPoint.Index]
+			if output.Type.CodeHash.Hex() == config.Cfg.DasCore.THQCodeHash {
+				switch common.Bytes2Hex(output.Type.Args) {
+				case common.ArgsQuoteCell:
+					cell, _ := t.dasCore.GetQuoteCell()
+					cellDepMaps = append(cellDepMaps, map[string]interface{}{
+						"name":  "QuoteCell",
+						"quote": cell.Quote(),
+					})
+				case common.ArgsTimeCell:
+					cell, _ := t.dasCore.GetTimeCell()
+					cellDepMaps = append(cellDepMaps, map[string]interface{}{
+						"name":      "TimeCell",
+						"timestamp": cell.Timestamp(),
+					})
+				case common.ArgsHeightCell:
+					cell, _ := t.dasCore.GetHeightCell()
+					cellDepMaps = append(cellDepMaps, map[string]interface{}{
+						"name":         "HeightCell",
+						"block_number": cell.BlockNumber(),
+					})
+				}
+				continue
+			}
+
+			if output.Type.CodeHash.Hex() == config.Cfg.DasCore.DasContractCodeHash {
+				script := common.GetScript(config.Cfg.DasCore.DasContractCodeHash, common.Bytes2Hex(output.Type.Args))
+				if contractName, ok := core.DasContractByTypeIdMap[common.ScriptToTypeId(script).String()]; ok {
+					cellDepMaps = append(cellDepMaps, map[string]interface{}{
+						"name": string(contractName),
+						"type": t.convertOutputTypeScript(output),
+					})
+					continue
+				}
+			}
+
+			if output.Type.CodeHash.Hex() == config.Cfg.DasCore.DasConfigCodeHash {
+				if value, ok := core.DasConfigCellMap.Load(common.Bytes2Hex(output.Type.Args)); ok {
+					cellDepMaps = append(cellDepMaps, map[string]interface{}{
+						"name":    value.(*core.DasConfigCellInfo).Name,
+						"type":    t.convertOutputTypeScript(output),
+						"witness": "", // TODO witness index
+					})
+					continue
+				}
+			}
+		}
+
+		cellDepMaps = append(cellDepMaps, map[string]interface{}{
+			"name": "unknown",
+		})
+	}
+	return
+}
+
+func (t *TransactionParser) parserInputs(cellInputs []*types.CellInput) (cellInputMaps []interface{}) {
+	for _, v := range cellInputs {
+		res, err := t.ckbClient.GetTransactionByHash(v.PreviousOutput.TxHash)
+		if err == nil {
+			output := res.Transaction.Outputs[v.PreviousOutput.Index]
+			outputData := res.Transaction.OutputsData[v.PreviousOutput.Index]
+			if output.Type == nil {
+				cellInputMaps = append(cellInputMaps, map[string]interface{}{
+					"name":     "NormalCell",
+					"capacity": output.Capacity,
+					"lock":     t.convertOutputLockScript(output),
+					"data":     common.Bytes2Hex(outputData),
+				})
+				continue
+			}
+
+			if contractName, ok := core.DasContractByTypeIdMap[output.Type.CodeHash.Hex()]; ok {
+				if string(contractName) == "account-cell-type" {
+					accountId, _ := common.OutputDataToAccountId(outputData)
+					cellInputMaps = append(cellInputMaps, map[string]interface{}{
+						"name":       string(contractName),
+						"capacity":   output.Capacity,
+						"account_id": common.Bytes2Hex(accountId),
+						"account":    string(outputData[80:]), // Warn: can't convert first account
+						"type":       t.convertOutputTypeScript(output),
+						"data":       common.Bytes2Hex(outputData),
+					})
+
+					continue
+				}
+				cellInputMaps = append(cellInputMaps, map[string]interface{}{
+					"name":     string(contractName),
+					"capacity": output.Capacity,
+					"type":     t.convertOutputTypeScript(output),
+					"data":     common.Bytes2Hex(outputData),
+				})
+				continue
+			}
+		}
+
+		cellInputMaps = append(cellInputMaps, map[string]interface{}{
+			"name": "unknown",
+		})
 	}
 
-	log.Info(cellDeps)
+	return
+}
 
-	// TODO auto changed cell
-	quote, _ := b.dasCore.GetQuoteCell()
-	log.Info(quote.Quote(), quote.ToCellDep().OutPoint.TxHash)
+func (t *TransactionParser) convertOutputLockScript(output *types.CellOutput) map[string]interface{} {
+	return map[string]interface{}{
+		"code_hash": output.Lock.CodeHash,
+		"hash_type": output.Lock.HashType,
+		"args":      common.Bytes2Hex(output.Lock.Args),
+	}
+}
 
-	height, _ := b.dasCore.GetHeightCell()
-	log.Info(height.BlockNumber(), height.ToCellDep().OutPoint.TxHash)
-
-	time, _ := b.dasCore.GetTimeCell()
-	log.Info(time.Timestamp(), time.ToCellDep().OutPoint.TxHash)
-
+func (t *TransactionParser) convertOutputTypeScript(output *types.CellOutput) map[string]interface{} {
+	return map[string]interface{}{
+		"code_hash": output.Type.CodeHash,
+		"hash_type": output.Type.HashType,
+		"args":      common.Bytes2Hex(output.Type.Args),
+	}
 }

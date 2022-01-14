@@ -31,6 +31,7 @@ type CfgServer struct {
 		THQCodeHash         string                            `json:"thq_code_hash" yaml:"thq_code_hash"`
 		DasContractArgs     string                            `json:"das_contract_args" yaml:"das_contract_args"`
 		DasContractCodeHash string                            `json:"das_contract_code_hash" yaml:"das_contract_code_hash"`
+		DasConfigCodeHash   string                            `json:"das_config_code_hash" yaml:"das_config_code_hash"`
 		MapDasContract      map[common.DasContractName]string `json:"map_das_contract" yaml:"map_das_contract"`
 		CellDeps            map[string]string                 `json:"cell_deps" yaml:"cell_deps"`
 	} `json:"das_core" yaml:"das_core"`

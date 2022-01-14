@@ -9,38 +9,38 @@ import (
 
 const DasActionTransferBalance = "transfer_balance"
 
-func (b *TransactionParser) registerTransactionHandle() {
-	b.mapTransactionHandle = make(map[string]FuncTransactionHandle)
-	b.mapTransactionHandle[DasActionTransferBalance] = b.ActionTransferBalance
-	b.mapTransactionHandle[common.DasActionConfig] = b.ActionConfigCell
-	b.mapTransactionHandle[common.DasActionWithdrawFromWallet] = b.ActionWithdrawFromWallet
-	b.mapTransactionHandle[common.DasActionTransfer] = b.ActionTransferPayment
-	b.mapTransactionHandle[common.DasActionCreateIncome] = b.ActionCreateIncome
-	b.mapTransactionHandle[common.DasActionConsolidateIncome] = b.ActionConsolidateIncome
+func (t *TransactionParser) registerTransactionHandle() {
+	t.mapTransactionHandle = make(map[string]FuncTransactionHandle)
+	t.mapTransactionHandle[DasActionTransferBalance] = t.ActionTransferBalance
+	t.mapTransactionHandle[common.DasActionConfig] = t.ActionConfigCell
+	t.mapTransactionHandle[common.DasActionWithdrawFromWallet] = t.ActionWithdrawFromWallet
+	t.mapTransactionHandle[common.DasActionTransfer] = t.ActionTransferPayment
+	t.mapTransactionHandle[common.DasActionCreateIncome] = t.ActionCreateIncome
+	t.mapTransactionHandle[common.DasActionConsolidateIncome] = t.ActionConsolidateIncome
 
-	b.mapTransactionHandle[common.DasActionApplyRegister] = b.ActionApplyRegister
-	b.mapTransactionHandle[common.DasActionPreRegister] = b.ActionPreRegister
-	b.mapTransactionHandle[common.DasActionPropose] = b.ActionPropose
-	b.mapTransactionHandle[common.DasActionExtendPropose] = b.ActionPropose
-	b.mapTransactionHandle[common.DasActionConfirmProposal] = b.ActionConfirmProposal
-	b.mapTransactionHandle[common.DasActionEditRecords] = b.ActionEditRecords
-	b.mapTransactionHandle[common.DasActionEditManager] = b.ActionEditManager
-	b.mapTransactionHandle[common.DasActionRenewAccount] = b.ActionRenewAccount
-	b.mapTransactionHandle[common.DasActionTransferAccount] = b.ActionTransferAccount
+	t.mapTransactionHandle[common.DasActionApplyRegister] = t.ActionApplyRegister
+	t.mapTransactionHandle[common.DasActionPreRegister] = t.ActionPreRegister
+	t.mapTransactionHandle[common.DasActionPropose] = t.ActionPropose
+	t.mapTransactionHandle[common.DasActionExtendPropose] = t.ActionPropose
+	t.mapTransactionHandle[common.DasActionConfirmProposal] = t.ActionConfirmProposal
+	t.mapTransactionHandle[common.DasActionEditRecords] = t.ActionEditRecords
+	t.mapTransactionHandle[common.DasActionEditManager] = t.ActionEditManager
+	t.mapTransactionHandle[common.DasActionRenewAccount] = t.ActionRenewAccount
+	t.mapTransactionHandle[common.DasActionTransferAccount] = t.ActionTransferAccount
 
-	b.mapTransactionHandle[common.DasActionStartAccountSale] = b.ActionStartAccountSale
-	b.mapTransactionHandle[common.DasActionEditAccountSale] = b.ActionEditAccountSale
-	b.mapTransactionHandle[common.DasActionCancelAccountSale] = b.ActionCancelAccountSale
-	b.mapTransactionHandle[common.DasActionBuyAccount] = b.ActionBuyAccount
+	t.mapTransactionHandle[common.DasActionStartAccountSale] = t.ActionStartAccountSale
+	t.mapTransactionHandle[common.DasActionEditAccountSale] = t.ActionEditAccountSale
+	t.mapTransactionHandle[common.DasActionCancelAccountSale] = t.ActionCancelAccountSale
+	t.mapTransactionHandle[common.DasActionBuyAccount] = t.ActionBuyAccount
 
-	b.mapTransactionHandle[common.DasActionMakeOffer] = b.ActionMakeOffer
-	b.mapTransactionHandle[common.DasActionEditOffer] = b.ActionEditOffer
-	b.mapTransactionHandle[common.DasActionCancelOffer] = b.ActionCancelOffer
-	b.mapTransactionHandle[common.DasActionAcceptOffer] = b.ActionAcceptOffer
+	t.mapTransactionHandle[common.DasActionMakeOffer] = t.ActionMakeOffer
+	t.mapTransactionHandle[common.DasActionEditOffer] = t.ActionEditOffer
+	t.mapTransactionHandle[common.DasActionCancelOffer] = t.ActionCancelOffer
+	t.mapTransactionHandle[common.DasActionAcceptOffer] = t.ActionAcceptOffer
 
-	b.mapTransactionHandle[common.DasActionDeclareReverseRecord] = b.ActionDeclareReverseRecord
-	b.mapTransactionHandle[common.DasActionRedeclareReverseRecord] = b.ActionRedeclareReverseRecord
-	b.mapTransactionHandle[common.DasActionRetractReverseRecord] = b.ActionRetractReverseRecord
+	t.mapTransactionHandle[common.DasActionDeclareReverseRecord] = t.ActionDeclareReverseRecord
+	t.mapTransactionHandle[common.DasActionRedeclareReverseRecord] = t.ActionRedeclareReverseRecord
+	t.mapTransactionHandle[common.DasActionRetractReverseRecord] = t.ActionRetractReverseRecord
 }
 
 func isCurrentVersionTx(tx *types.Transaction, name common.DasContractName) (bool, error) {
