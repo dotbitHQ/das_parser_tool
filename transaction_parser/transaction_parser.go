@@ -177,7 +177,7 @@ func (t *TransactionParser) parserInputs(inputs []*types.CellInput) (inputMaps [
 						"name":       string(contractName),
 						"capacity":   output.Capacity,
 						"account_id": common.Bytes2Hex(accountId),
-						"account":    string(outputData[80:]), // Warn: can't convert first account
+						"account":    string(outputData[80:]), // Warn: can't convert empty account
 						"type":       t.convertOutputTypeScript(output),
 						"data":       common.Bytes2Hex(outputData),
 					})
