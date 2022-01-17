@@ -21,7 +21,6 @@ das_core:
     "reverse-record-cell-type": "0x000f3e1a89d85d268ed6d36578d474ecf91d8809f4f696dd2e5b97fe67b84a2e"
     "offer-cell-type": "0x3ffc0f8b0ce4bc09f700ca84355a092447d79fc5224a6fbd64af95af840af91b"
   cell_deps:
-    "0x71a7ba8fc96349fea0ed3a5c47992e3b4084b031a42264a018e0072e8172e46c": "secp256k1_blake160"
     # dynamic-lib
     "0x62250fd2656332ba8fe86054071d9194de05d93ad48799a00d9960aa2ab54cc9": "eth-lib"
     "0x1373db89fd2c7ff1617d4fd6740e916169631c5ab6c9995786645071ab19b822": "ckb-lib"

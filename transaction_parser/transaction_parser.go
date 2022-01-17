@@ -55,36 +55,12 @@ func (t *TransactionParser) RunParser(h string) {
 	log.Info("RunParser version:", tx.Transaction.Version)
 	log.Info("RunParser status:", tx.TxStatus.Status)
 
-	builder, err := witness.ActionDataBuilderFromTx(tx.Transaction)
-	if err != nil {
-		log.Fatal("ActionDataBuilderFromTx err:", err.Error())
-	}
-	handle, ok := t.mapTransactionHandle[builder.Action]
-	if !ok {
-		log.Fatal("action doesn't exist", builder.Action)
-	}
-	// transaction parse by action
-	resp := handle(FuncTransactionHandleReq{
-		Tx:     tx.Transaction,
-		Hash:   h,
-		Action: builder.Action,
-	})
-	if resp.Err != nil {
-		log.Fatal("action handle err:", builder.Action, resp.Err.Error())
-	}
-
-	if resp.ActionName != "" {
-		log.Info("ActionName", resp.ActionName)
-		t.parserTransaction(tx.Transaction)
-	}
-}
-
-func (t *TransactionParser) parserTransaction(transaction *types.Transaction) {
 	// Warn: if you need order json, use ordered map
 	out := map[string]interface{}{}
-	out["cell_deps"] = t.parserCellDeps(transaction.CellDeps)
-	out["inputs"] = t.parserInputs(transaction.Inputs)
-	out["outputs"] = t.parserOutputs(transaction.Outputs, transaction.OutputsData)
+	out["cell_deps"] = t.parserCellDeps(tx.Transaction.CellDeps)
+	out["inputs"] = t.parserInputs(tx.Transaction.Inputs)
+	out["outputs"] = t.parserOutputs(tx.Transaction.Outputs, tx.Transaction.OutputsData)
+	out["witness"] = t.parserWitnesses(tx.Transaction)
 
 	b, _ := json.Marshal(out)
 	log.Info(string(b))
@@ -92,6 +68,12 @@ func (t *TransactionParser) parserTransaction(transaction *types.Transaction) {
 
 func (t *TransactionParser) parserCellDeps(cellDeps []*types.CellDep) (cellDepsMap []interface{}) {
 	for _, v := range cellDeps {
+		if v.DepType == types.DepTypeDepGroup {
+			cellDepsMap = append(cellDepsMap, map[string]interface{}{
+				"name": "secp256k1_blake160",
+			})
+			continue
+		}
 		if cellDep, ok := config.Cfg.DasCore.CellDeps[v.OutPoint.TxHash.String()]; ok {
 			cellDepsMap = append(cellDepsMap, map[string]interface{}{
 				"name": cellDep,
@@ -178,7 +160,7 @@ func (t *TransactionParser) parserOutputs(outputs []*types.CellOutput, outputsDa
 func (t *TransactionParser) parserOutput(output *types.CellOutput, outputData []byte) (outputMap interface{}) {
 	if output.Type == nil {
 		return map[string]interface{}{
-			"name":     "NormalCell",
+			"name":     "normal-cell",
 			"capacity": output.Capacity,
 			"lock":     t.convertOutputLockScript(output),
 			"data":     common.Bytes2Hex(outputData),
@@ -224,4 +206,29 @@ func (t *TransactionParser) convertOutputTypeScript(output *types.CellOutput) ma
 		"hash_type": output.Type.HashType,
 		"args":      common.Bytes2Hex(output.Type.Args),
 	}
+}
+
+func (t *TransactionParser) parserWitnesses(transaction *types.Transaction) (witnessesMap []interface{}) {
+	builder, err := witness.ActionDataBuilderFromTx(transaction)
+	if err != nil {
+		log.Fatal("ActionDataBuilderFromTx err:", err.Error())
+	}
+	handle, ok := t.mapTransactionHandle[builder.Action]
+	if !ok {
+		log.Fatal("action doesn't exist", builder.Action)
+	}
+	// transaction parse by action
+	resp := handle(FuncTransactionHandleReq{
+		Tx:     transaction,
+		Hash:   transaction.Hash.Hex(),
+		Action: builder.Action,
+	})
+	if resp.Err != nil {
+		log.Fatal("action handle err:", builder.Action, resp.Err.Error())
+	}
+
+	if resp.ActionName != "" {
+		witnessesMap = resp.WitnessesMap
+	}
+	return
 }

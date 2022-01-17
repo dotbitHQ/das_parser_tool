@@ -64,12 +64,13 @@ func isCurrentVersionTx(tx *types.Transaction, name common.DasContractName) (boo
 type FuncTransactionHandleReq struct {
 	Tx     *types.Transaction
 	Hash   string
-	Action common.DasAction
+	Action common.DasAction //TODO use build instead
 }
 
 type FuncTransactionHandleResp struct {
-	ActionName string
-	Err        error
+	ActionName   string
+	Err          error
+	WitnessesMap []interface{}
 }
 
 type FuncTransactionHandle func(FuncTransactionHandleReq) FuncTransactionHandleResp
