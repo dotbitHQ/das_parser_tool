@@ -27,14 +27,23 @@ func (t *TransactionParser) ActionCreateIncome(req FuncTransactionHandleReq) (re
 			continue
 		}
 
+		// TODO add das lib parser witness direct
 		configCellMain := t.parserConfigCellMainWitnesses(witnessByte, req.Transaction)
 		if configCellMain != nil {
 			resp.WitnessesMap = append(resp.WitnessesMap, configCellMain)
+			continue
 		}
 
 		configCellIncome := t.parserConfigCellIncomeWitnesses(witnessByte, req.Transaction)
 		if configCellIncome != nil {
 			resp.WitnessesMap = append(resp.WitnessesMap, configCellIncome)
+			continue
+		}
+
+		// IncomeCellData
+		incomeCellData := t.parserIncomeCellDataWitnesses(witnessByte, req.Transaction)
+		if incomeCellData != nil {
+			resp.WitnessesMap = append(resp.WitnessesMap, incomeCellData)
 		}
 	}
 

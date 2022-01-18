@@ -311,3 +311,37 @@ func (t *TransactionParser) parserConfigCellIncomeWitnesses(witnessByte []byte, 
 		"min_transfer_capacity": common.Bytes2Hex(builder.ConfigCellIncome.MinTransferCapacity().RawData()),
 	}
 }
+
+func (t *TransactionParser) parserIncomeCellDataWitnesses(witnessByte []byte, transaction *types.Transaction) interface{} {
+	builder, _ := witness.IncomeCellDataBuilderFromTx(transaction, common.DataTypeNew)
+	if builder == nil || builder.IncomeCellData == nil {
+		return nil
+	}
+
+	var recordsMaps []map[string]interface{}
+	for _, record := range builder.Records() {
+		recordsMaps = append(recordsMaps, map[string]interface{}{
+			"belong_to": map[string]interface{}{
+				"code_hash": common.Bytes2Hex(record.BelongTo.CodeHash().RawData()),
+				"hash_type": common.Bytes2Hex(record.BelongTo.HashType().AsSlice()),
+				"args":      common.Bytes2Hex(record.BelongTo.Args().RawData()),
+			},
+			"capacity": record.Capacity,
+		})
+	}
+
+	return map[string]interface{}{
+		"name":         "IncomeCellData",
+		"witness":      common.Bytes2Hex(witnessByte),
+		"witness_hash": common.Bytes2Hex(common.Blake2b(builder.IncomeCellData.AsSlice())),
+		"version":      builder.Index, // TODO add das lib version
+		"index":        builder.Index,
+		"data": map[string]interface{}{
+			"creator": map[string]interface{}{
+				"code_hash": common.Bytes2Hex(builder.Creator().CodeHash().RawData()),
+				"hash_type": common.Bytes2Hex(builder.Creator().HashType().AsSlice()),
+			},
+			"records": recordsMaps,
+		},
+	}
+}
