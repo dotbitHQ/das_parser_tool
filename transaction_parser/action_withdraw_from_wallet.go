@@ -36,8 +36,22 @@ func (t *TransactionParser) ActionWithdrawFromWallet(req FuncTransactionHandleRe
 		return
 	}
 
-	resp.ActionName = req.Builder.Action
-	resp.WitnessesMap = t.parserNormalWitnesses(req, len(req.Transaction.Inputs))
+	for k, witnessByte := range req.Transaction.Witnesses {
+		if k < len(req.Transaction.Inputs) {
+			resp.WitnessesMap = append(resp.WitnessesMap, t.parserNormalWitness(witnessByte))
+			continue
+		}
+
+		if k == len(req.Transaction.Inputs) {
+			resp.WitnessesMap = append(resp.WitnessesMap, t.parserActionDataWitness(witnessByte, req.Builder))
+			continue
+		}
+
+		configCellMain := t.parserConfigCellMainWitnesses(witnessByte, req.Transaction)
+		if configCellMain != nil {
+			resp.WitnessesMap = append(resp.WitnessesMap, configCellMain)
+		}
+	}
 
 	return
 }

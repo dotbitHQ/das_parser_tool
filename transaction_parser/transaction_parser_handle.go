@@ -68,7 +68,6 @@ type FuncTransactionHandleReq struct {
 }
 
 type FuncTransactionHandleResp struct {
-	ActionName   string
 	Err          error
 	WitnessesMap []interface{}
 }

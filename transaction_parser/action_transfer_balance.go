@@ -21,6 +21,7 @@ func (t *TransactionParser) ActionTransferBalance(req FuncTransactionHandleReq) 
 
 	log.Info("ActionTransferBalance:", req.Transaction.Hash.Hex())
 
+	var currentVersion bool
 	for _, v := range req.Transaction.Outputs {
 		if v.Lock.CodeHash.Hex() != dasLock.ContractTypeId.Hex() {
 			continue
@@ -29,13 +30,28 @@ func (t *TransactionParser) ActionTransferBalance(req FuncTransactionHandleReq) 
 			continue
 		}
 
-		resp.ActionName = req.Builder.Action
+		currentVersion = true
 	}
-	if resp.ActionName == "" {
+	if !currentVersion {
 		return
 	}
 
-	resp.WitnessesMap = t.parserNormalWitnesses(req, len(req.Transaction.Inputs))
+	for k, witnessByte := range req.Transaction.Witnesses {
+		if k < len(req.Transaction.Inputs) {
+			resp.WitnessesMap = append(resp.WitnessesMap, t.parserNormalWitness(witnessByte))
+			continue
+		}
+
+		if k == len(req.Transaction.Inputs) {
+			resp.WitnessesMap = append(resp.WitnessesMap, t.parserActionDataWitness(witnessByte, req.Builder))
+			continue
+		}
+
+		configCellMain := t.parserConfigCellMainWitnesses(witnessByte, req.Transaction)
+		if configCellMain != nil {
+			resp.WitnessesMap = append(resp.WitnessesMap, configCellMain)
+		}
+	}
 
 	return
 }
