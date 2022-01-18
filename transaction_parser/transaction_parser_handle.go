@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/DeAccountSystems/das-lib/common"
 	"github.com/DeAccountSystems/das-lib/core"
+	"github.com/DeAccountSystems/das-lib/witness"
 	"github.com/nervosnetwork/ckb-sdk-go/types"
 )
 
@@ -62,9 +63,8 @@ func isCurrentVersionTx(tx *types.Transaction, name common.DasContractName) (boo
 }
 
 type FuncTransactionHandleReq struct {
-	Tx     *types.Transaction
-	Hash   string
-	Action common.DasAction //TODO use build instead
+	Transaction *types.Transaction
+	Builder     *witness.ActionDataBuilder
 }
 
 type FuncTransactionHandleResp struct {

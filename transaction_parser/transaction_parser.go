@@ -124,9 +124,9 @@ func (t *TransactionParser) parserCellDeps(cellDeps []*types.CellDep) (cellDepsM
 		if output.Type.CodeHash.Hex() == config.Cfg.DasCore.DasConfigCodeHash {
 			if value, ok := core.DasConfigCellMap.Load(common.Bytes2Hex(output.Type.Args)); ok {
 				cellDepsMap = append(cellDepsMap, map[string]interface{}{
-					"name": value.(*core.DasConfigCellInfo).Name,
-					"type": t.convertOutputTypeScript(output),
-					"data": common.Bytes2Hex(res.Transaction.OutputsData[v.OutPoint.Index]),
+					"name":         value.(*core.DasConfigCellInfo).Name,
+					"type":         t.convertOutputTypeScript(output),
+					"witness_hash": common.Bytes2Hex(res.Transaction.OutputsData[v.OutPoint.Index]),
 				})
 				continue
 			}
@@ -219,9 +219,8 @@ func (t *TransactionParser) parserWitnesses(transaction *types.Transaction) (wit
 	}
 	// transaction parse by action
 	resp := handle(FuncTransactionHandleReq{
-		Tx:     transaction,
-		Hash:   transaction.Hash.Hex(),
-		Action: builder.Action,
+		Transaction: transaction,
+		Builder:     builder,
 	})
 	if resp.Err != nil {
 		log.Fatal("action handle err:", builder.Action, resp.Err.Error())
