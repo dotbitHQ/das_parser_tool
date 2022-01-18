@@ -7,34 +7,24 @@ import (
 	"github.com/DeAccountSystems/das-lib/witness"
 )
 
-func (t *TransactionParser) ActionTransferBalance(req FuncTransactionHandleReq) (resp FuncTransactionHandleResp) {
-	dasLock, err := core.GetDasContractInfo(common.DasContractNameDispatchCellType)
+func (t *TransactionParser) ActionConfigCell(req FuncTransactionHandleReq) (resp FuncTransactionHandleResp) {
+	configContract, err := core.GetDasContractInfo(common.DasContractNameConfigCellType)
 	if err != nil {
 		resp.Err = fmt.Errorf("GetDasContractInfo err: %s", err.Error())
 		return
-	}
-
-	dasBalance, err := core.GetDasContractInfo(common.DasContractNameBalanceCellType)
-	if err != nil {
-		resp.Err = fmt.Errorf("GetDasContractInfo err: %s", err.Error())
+	} else if configContract.ContractTypeId != req.Transaction.Outputs[0].Type.CodeHash {
+		log.Warn("not current version config cell")
 		return
 	}
 
-	log.Info("ActionTransferBalance:", req.Transaction.Hash.Hex())
-
-	for _, v := range req.Transaction.Outputs {
-		if v.Lock.CodeHash.Hex() != dasLock.ContractTypeId.Hex() {
-			continue
-		}
-		if v.Type != nil && v.Type.CodeHash.Hex() != dasBalance.ContractTypeId.Hex() {
-			continue
-		}
-
-		resp.ActionName = req.Builder.Action
-	}
-	if resp.ActionName == "" {
+	log.Info("ActionConfigCell:", req.Transaction.Hash.Hex())
+	// config cell update，rsync config cell out point
+	if err = t.dasCore.AsyncDasConfigCell(); err != nil {
+		resp.Err = fmt.Errorf("AsyncDasConfigCell err: %s", err.Error())
 		return
 	}
+
+	resp.ActionName = req.Builder.Action
 
 	inputsSize := len(req.Transaction.Inputs)
 	for k, v := range req.Transaction.Witnesses {
