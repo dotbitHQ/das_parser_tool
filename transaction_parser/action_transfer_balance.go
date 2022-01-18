@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/DeAccountSystems/das-lib/common"
 	"github.com/DeAccountSystems/das-lib/core"
-	"github.com/DeAccountSystems/das-lib/witness"
 )
 
 func (t *TransactionParser) ActionTransferBalance(req FuncTransactionHandleReq) (resp FuncTransactionHandleResp) {
@@ -36,33 +35,7 @@ func (t *TransactionParser) ActionTransferBalance(req FuncTransactionHandleReq) 
 		return
 	}
 
-	inputsSize := len(req.Transaction.Inputs)
-	for k, v := range req.Transaction.Witnesses {
-		if k < inputsSize {
-			resp.WitnessesMap = append(resp.WitnessesMap, map[string]interface{}{
-				"name":    "unknown",
-				"witness": common.Bytes2Hex(v),
-			})
-			continue
-		}
-
-		if k == inputsSize {
-			resp.WitnessesMap = append(resp.WitnessesMap, map[string]interface{}{
-				"name":         "ActionData",
-				"witness":      common.Bytes2Hex(v),
-				"witness_hash": common.Bytes2Hex(common.Blake2b(req.Builder.ActionData.AsSlice())),
-				"action":       req.Builder.Action,
-				"params":       req.Builder.ParamsStr,
-			})
-			continue
-		}
-
-		builder, _ := witness.ConfigCellDataBuilderByTypeArgs(req.Transaction, common.ConfigCellTypeArgsMain)
-		if builder.ConfigCellMain != nil {
-			resp.WitnessesMap = append(resp.WitnessesMap, t.parserConfigCellMain(v, builder.ConfigCellMain))
-			continue
-		}
-	}
+	resp.WitnessesMap = t.parserNormalWitnesses(req, len(req.Transaction.Inputs))
 
 	return
 }
