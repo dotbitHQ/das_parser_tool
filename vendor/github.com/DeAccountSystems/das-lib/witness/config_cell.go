@@ -12,6 +12,7 @@ type ConfigCellDataBuilder struct {
 	ConfigCellAccount           *molecule.ConfigCellAccount
 	ConfigCellPrice             *molecule.ConfigCellPrice
 	PriceConfigMap              map[uint8]*molecule.PriceConfig
+	PriceMaxLength              uint8
 	ConfigCellSecondaryMarket   *molecule.ConfigCellSecondaryMarket
 	ConfigCellIncome            *molecule.ConfigCellIncome
 	ConfigCellProfitRate        *molecule.ConfigCellProfitRate
@@ -60,6 +61,9 @@ func ConfigCellDataBuilderRefByTypeArgs(builder *ConfigCellDataBuilder, tx *type
 			length, err := molecule.Bytes2GoU8(price.Length().RawData())
 			if err != nil {
 				return fmt.Errorf("price.Length() err: %s", err.Error())
+			}
+			if builder.PriceMaxLength < length {
+				builder.PriceMaxLength = length
 			}
 			builder.PriceConfigMap[length] = price
 		}
@@ -260,8 +264,8 @@ func (c *ConfigCellDataBuilder) AccountPrice(length uint8) (uint64, uint64, erro
 }
 
 func (c *ConfigCellDataBuilder) PriceConfig(length uint8) *molecule.PriceConfig {
-	if length > 5 {
-		length = 5
+	if length > c.PriceMaxLength {
+		length = c.PriceMaxLength
 	}
 	if c.PriceConfigMap != nil {
 		if price, ok := c.PriceConfigMap[length]; ok {

@@ -334,8 +334,8 @@ func (t *TransactionParser) parserIncomeCellDataWitnesses(witnessByte []byte, tr
 		"name":         "IncomeCellData",
 		"witness":      common.Bytes2Hex(witnessByte),
 		"witness_hash": common.Bytes2Hex(common.Blake2b(builder.IncomeCellData.AsSlice())),
-		"version":      builder.Index, // TODO add das lib version
 		"index":        builder.Index,
+		"version":      builder.Version,
 		"data": map[string]interface{}{
 			"creator": map[string]interface{}{
 				"code_hash": common.Bytes2Hex(builder.Creator().CodeHash().RawData()),
