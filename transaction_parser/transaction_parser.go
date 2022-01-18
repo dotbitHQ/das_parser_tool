@@ -246,13 +246,14 @@ func (t *TransactionParser) parserNormalWitnesses(req FuncTransactionHandleReq, 
 				"witness":      common.Bytes2Hex(v),
 				"witness_hash": common.Bytes2Hex(common.Blake2b(req.Builder.ActionData.AsSlice())),
 				"action":       req.Builder.Action,
+				"action_hash":  common.Bytes2Hex(req.Builder.ActionData.Action().RawData()),
 				"params":       req.Builder.ParamsStr,
 			})
 			continue
 		}
 
 		builder, _ := witness.ConfigCellDataBuilderByTypeArgs(req.Transaction, common.ConfigCellTypeArgsMain)
-		if builder.ConfigCellMain != nil {
+		if builder != nil && builder.ConfigCellMain != nil {
 			witnessesMap = append(witnessesMap, map[string]interface{}{
 				"name":         "ConfigCellMain",
 				"witness":      common.Bytes2Hex(v),
