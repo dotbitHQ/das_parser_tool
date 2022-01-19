@@ -53,7 +53,7 @@ func (t *TransactionParser) RunParser(h string) {
 	out["cell_deps"] = t.parserCellDeps(tx.Transaction.CellDeps)
 	out["inputs"] = t.parserInputs(tx.Transaction.Inputs)
 	out["outputs"] = t.parserOutputs(tx.Transaction.Outputs, tx.Transaction.OutputsData)
-	out["witness"] = t.parserWitnesses(tx.Transaction)
+	out["witnesses"] = t.parserWitnesses(tx.Transaction)
 
 	b, _ := json.Marshal(out)
 	log.Info(string(b))
@@ -79,7 +79,7 @@ func (t *TransactionParser) parserCellDeps(cellDeps []*types.CellDep) (cellDepsM
 		}
 
 		output := res.Transaction.Outputs[v.OutPoint.Index]
-		if output.Type.CodeHash.Hex() == config.Cfg.DasCore.THQCodeHash {
+		if output.Type != nil && output.Type.CodeHash.Hex() == config.Cfg.DasCore.THQCodeHash {
 			switch common.Bytes2Hex(output.Type.Args) {
 			case common.ArgsQuoteCell:
 				cell, _ := t.dasCore.GetQuoteCell()
@@ -103,7 +103,7 @@ func (t *TransactionParser) parserCellDeps(cellDeps []*types.CellDep) (cellDepsM
 			continue
 		}
 
-		if output.Type.CodeHash.Hex() == config.Cfg.DasCore.DasContractCodeHash {
+		if output.Type != nil && output.Type.CodeHash.Hex() == config.Cfg.DasCore.DasContractCodeHash {
 			script := common.GetScript(config.Cfg.DasCore.DasContractCodeHash, common.Bytes2Hex(output.Type.Args))
 			if contractName, ok := core.DasContractByTypeIdMap[common.ScriptToTypeId(script).String()]; ok {
 				cellDepsMap = append(cellDepsMap, map[string]interface{}{
@@ -114,7 +114,7 @@ func (t *TransactionParser) parserCellDeps(cellDeps []*types.CellDep) (cellDepsM
 			}
 		}
 
-		if output.Type.CodeHash.Hex() == config.Cfg.DasCore.DasConfigCodeHash {
+		if output.Type != nil && output.Type.CodeHash.Hex() == config.Cfg.DasCore.DasConfigCodeHash {
 			if value, ok := core.DasConfigCellMap.Load(common.Bytes2Hex(output.Type.Args)); ok {
 				cellDepsMap = append(cellDepsMap, map[string]interface{}{
 					"name":         value.(*core.DasConfigCellInfo).Name,
@@ -126,7 +126,7 @@ func (t *TransactionParser) parserCellDeps(cellDeps []*types.CellDep) (cellDepsM
 		}
 
 		cellDepsMap = append(cellDepsMap, map[string]interface{}{
-			"name": "unknown",
+			"unknown": v.OutPoint.TxHash.Hex(),
 		})
 	}
 	return
@@ -181,7 +181,7 @@ func (t *TransactionParser) parserOutput(output *types.CellOutput, outputData []
 	}
 
 	return map[string]interface{}{
-		"name": "unknown",
+		"unknown": t.convertOutputTypeScript(output),
 	}
 }
 
