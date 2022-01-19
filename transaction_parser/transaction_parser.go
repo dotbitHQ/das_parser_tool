@@ -16,11 +16,10 @@ import (
 var log = mylog.NewLogger("transaction_parser", mylog.LevelDebug)
 
 type TransactionParser struct {
-	dasCore              *core.DasCore
-	mapTransactionHandle map[common.DasAction]FuncTransactionHandle
-	ckbClient            *chain.Client
-	ctx                  context.Context
-	wg                   *sync.WaitGroup
+	dasCore   *core.DasCore
+	ckbClient *chain.Client
+	ctx       context.Context
+	wg        *sync.WaitGroup
 }
 
 type ParamsTransactionParser struct {
@@ -37,13 +36,7 @@ func NewTransactionParser(p ParamsTransactionParser) (*TransactionParser, error)
 		ctx:       p.Ctx,
 		wg:        p.Wg,
 	}
-	bp.registerTransactionHandle()
 	return &bp, nil
-}
-
-func (t *TransactionParser) GetMapTransactionHandle(action common.DasAction) (FuncTransactionHandle, bool) {
-	handler, ok := t.mapTransactionHandle[action]
-	return handler, ok
 }
 
 func (t *TransactionParser) RunParser(h string) {
@@ -209,139 +202,9 @@ func (t *TransactionParser) convertOutputTypeScript(output *types.CellOutput) ma
 }
 
 func (t *TransactionParser) parserWitnesses(transaction *types.Transaction) (witnessesMap []interface{}) {
-	builder, err := witness.ActionDataBuilderFromTx(transaction)
-	if err != nil {
-		log.Fatal("ActionDataBuilderFromTx err:", err.Error())
-	}
-	handle, ok := t.mapTransactionHandle[builder.Action]
-	if !ok {
-		log.Fatal("action doesn't exist", builder.Action)
-	}
-	// transaction parse by action
-	resp := handle(FuncTransactionHandleReq{
-		Transaction: transaction,
-		Builder:     builder,
-	})
-	if resp.Err != nil {
-		log.Fatal("action handle err:", builder.Action, resp.Err.Error())
+	for _, witnessByte := range transaction.Witnesses {
+		witnessesMap = append(witnessesMap, witness.ParserWitnessData(witnessByte))
 	}
 
-	witnessesMap = resp.WitnessesMap
 	return
-}
-
-func (t *TransactionParser) parserNormalWitness(witnessByte []byte) interface{} {
-	return map[string]interface{}{
-		"name":    "unknown",
-		"witness": common.Bytes2Hex(witnessByte),
-	}
-}
-
-func (t *TransactionParser) parserActionDataWitness(witnessByte []byte, builder *witness.ActionDataBuilder) interface{} {
-	return map[string]interface{}{
-		"name":         "ActionData",
-		"witness":      common.Bytes2Hex(witnessByte),
-		"witness_hash": common.Bytes2Hex(common.Blake2b(builder.ActionData.AsSlice())),
-		"action":       builder.Action,
-		"action_hash":  common.Bytes2Hex(builder.ActionData.Action().RawData()),
-		"params":       builder.ParamsStr,
-	}
-}
-
-func (t *TransactionParser) parserConfigCellMainWitnesses(witnessByte []byte, transaction *types.Transaction) interface{} {
-	builder, _ := witness.ConfigCellDataBuilderByTypeArgs(transaction, common.ConfigCellTypeArgsMain)
-	if builder == nil || builder.ConfigCellMain == nil {
-		return nil
-	}
-
-	return map[string]interface{}{
-		"name":         "ConfigCellMain",
-		"witness":      common.Bytes2Hex(witnessByte),
-		"witness_hash": common.Bytes2Hex(common.Blake2b(builder.ConfigCellMain.AsSlice())),
-		"status":       common.Bytes2Hex(builder.ConfigCellMain.Status().RawData()),
-		"type_id_table": map[string]interface{}{
-			"account_cell":         common.Bytes2Hex(builder.ConfigCellMain.TypeIdTable().AccountCell().RawData()),
-			"apply_register_cell":  common.Bytes2Hex(builder.ConfigCellMain.TypeIdTable().ApplyRegisterCell().RawData()),
-			"balance_cell":         common.Bytes2Hex(builder.ConfigCellMain.TypeIdTable().BalanceCell().RawData()),
-			"income_cell":          common.Bytes2Hex(builder.ConfigCellMain.TypeIdTable().IncomeCell().RawData()),
-			"pre_account_cell":     common.Bytes2Hex(builder.ConfigCellMain.TypeIdTable().PreAccountCell().RawData()),
-			"proposal_cell":        common.Bytes2Hex(builder.ConfigCellMain.TypeIdTable().ProposalCell().RawData()),
-			"account_sale_cell":    common.Bytes2Hex(builder.ConfigCellMain.TypeIdTable().AccountSaleCell().RawData()),
-			"account_auction_cell": common.Bytes2Hex(builder.ConfigCellMain.TypeIdTable().AccountAuctionCell().RawData()),
-			"offer_cell":           common.Bytes2Hex(builder.ConfigCellMain.TypeIdTable().OfferCell().RawData()),
-			"reverse_record_cell":  common.Bytes2Hex(builder.ConfigCellMain.TypeIdTable().ReverseRecordCell().RawData()),
-		},
-		"das_lock_out_point_table": map[string]interface{}{
-			"ckb_signall": map[string]interface{}{
-				"tx_hash": common.Bytes2Hex(builder.ConfigCellMain.DasLockOutPointTable().CkbSignall().TxHash().RawData()),
-				"index":   common.Bytes2Hex(builder.ConfigCellMain.DasLockOutPointTable().CkbSignall().Index().RawData()),
-			},
-			"ckb_multisign": map[string]interface{}{
-				"tx_hash": common.Bytes2Hex(builder.ConfigCellMain.DasLockOutPointTable().CkbMultisign().TxHash().RawData()),
-				"index":   common.Bytes2Hex(builder.ConfigCellMain.DasLockOutPointTable().CkbMultisign().Index().RawData()),
-			},
-			"ckb_anyone_can_pay": map[string]interface{}{
-				"tx_hash": common.Bytes2Hex(builder.ConfigCellMain.DasLockOutPointTable().CkbAnyoneCanPay().TxHash().RawData()),
-				"index":   common.Bytes2Hex(builder.ConfigCellMain.DasLockOutPointTable().CkbAnyoneCanPay().Index().RawData()),
-			},
-			"eth": map[string]interface{}{
-				"tx_hash": common.Bytes2Hex(builder.ConfigCellMain.DasLockOutPointTable().Eth().TxHash().RawData()),
-				"index":   common.Bytes2Hex(builder.ConfigCellMain.DasLockOutPointTable().Eth().Index().RawData()),
-			},
-			"tron": map[string]interface{}{
-				"tx_hash": common.Bytes2Hex(builder.ConfigCellMain.DasLockOutPointTable().Tron().TxHash().RawData()),
-				"index":   common.Bytes2Hex(builder.ConfigCellMain.DasLockOutPointTable().Tron().Index().RawData()),
-			},
-		},
-	}
-}
-
-func (t *TransactionParser) parserConfigCellIncomeWitnesses(witnessByte []byte, transaction *types.Transaction) interface{} {
-	builder, _ := witness.ConfigCellDataBuilderByTypeArgs(transaction, common.ConfigCellTypeArgsIncome)
-	if builder == nil || builder.ConfigCellIncome == nil {
-		return nil
-	}
-
-	return map[string]interface{}{
-		"name":                  "ConfigCellIncome",
-		"witness":               common.Bytes2Hex(witnessByte),
-		"witness_hash":          common.Bytes2Hex(common.Blake2b(builder.ConfigCellIncome.AsSlice())),
-		"basic_capacity":        common.Bytes2Hex(builder.ConfigCellIncome.BasicCapacity().RawData()),
-		"max_records":           common.Bytes2Hex(builder.ConfigCellIncome.MaxRecords().RawData()),
-		"min_transfer_capacity": common.Bytes2Hex(builder.ConfigCellIncome.MinTransferCapacity().RawData()),
-	}
-}
-
-func (t *TransactionParser) parserIncomeCellDataWitnesses(witnessByte []byte, transaction *types.Transaction) interface{} {
-	builder, _ := witness.IncomeCellDataBuilderFromTx(transaction, common.DataTypeNew)
-	if builder == nil || builder.IncomeCellData == nil {
-		return nil
-	}
-
-	var recordsMaps []map[string]interface{}
-	for _, record := range builder.Records() {
-		recordsMaps = append(recordsMaps, map[string]interface{}{
-			"belong_to": map[string]interface{}{
-				"code_hash": common.Bytes2Hex(record.BelongTo.CodeHash().RawData()),
-				"hash_type": common.Bytes2Hex(record.BelongTo.HashType().AsSlice()),
-				"args":      common.Bytes2Hex(record.BelongTo.Args().RawData()),
-			},
-			"capacity": record.Capacity,
-		})
-	}
-
-	return map[string]interface{}{
-		"name":         "IncomeCellData",
-		"witness":      common.Bytes2Hex(witnessByte),
-		"witness_hash": common.Bytes2Hex(common.Blake2b(builder.IncomeCellData.AsSlice())),
-		"index":        builder.Index,
-		"version":      builder.Version,
-		"data": map[string]interface{}{
-			"creator": map[string]interface{}{
-				"code_hash": common.Bytes2Hex(builder.Creator().CodeHash().RawData()),
-				"hash_type": common.Bytes2Hex(builder.Creator().HashType().AsSlice()),
-			},
-			"records": recordsMaps,
-		},
-	}
 }
