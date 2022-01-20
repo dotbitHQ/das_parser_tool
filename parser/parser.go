@@ -1,4 +1,4 @@
-package transaction_parser
+package parser
 
 import (
 	"context"
@@ -15,22 +15,22 @@ import (
 
 var log = mylog.NewLogger("transaction_parser", mylog.LevelDebug)
 
-type TransactionParser struct {
+type Parser struct {
 	dasCore   *core.DasCore
 	ckbClient *chain.Client
 	ctx       context.Context
 	wg        *sync.WaitGroup
 }
 
-type ParamsTransactionParser struct {
+type ParamsParser struct {
 	DasCore   *core.DasCore
 	CkbClient *chain.Client
 	Ctx       context.Context
 	Wg        *sync.WaitGroup
 }
 
-func NewTransactionParser(p ParamsTransactionParser) (*TransactionParser, error) {
-	bp := TransactionParser{
+func NewParser(p ParamsParser) (*Parser, error) {
+	bp := Parser{
 		dasCore:   p.DasCore,
 		ckbClient: p.CkbClient,
 		ctx:       p.Ctx,
@@ -39,7 +39,7 @@ func NewTransactionParser(p ParamsTransactionParser) (*TransactionParser, error)
 	return &bp, nil
 }
 
-func (t *TransactionParser) RunParser(h string) {
+func (t *Parser) RunParser(h string) {
 	tx, err := t.ckbClient.GetTransactionByHash(types.HexToHash(h))
 	if err != nil {
 		log.Fatal(err)
@@ -59,17 +59,17 @@ func (t *TransactionParser) RunParser(h string) {
 	log.Info(string(b))
 }
 
-func (t *TransactionParser) parserCellDeps(cellDeps []*types.CellDep) (cellDepsMap []interface{}) {
+func (t *Parser) parserCellDeps(cellDeps []*types.CellDep) (cellDepsMap []interface{}) {
 	for _, v := range cellDeps {
 		if v.DepType == types.DepTypeDepGroup {
 			cellDepsMap = append(cellDepsMap, map[string]interface{}{
-				"name": "secp256k1_blake160",
+				"secp256k1_blake160": v.OutPoint,
 			})
 			continue
 		}
 		if cellDep, ok := config.Cfg.DasCore.CellDeps[v.OutPoint.TxHash.String()]; ok {
 			cellDepsMap = append(cellDepsMap, map[string]interface{}{
-				"name": cellDep,
+				cellDep: v.OutPoint,
 			})
 			continue
 		}
@@ -84,19 +84,19 @@ func (t *TransactionParser) parserCellDeps(cellDeps []*types.CellDep) (cellDepsM
 			case common.ArgsQuoteCell:
 				cell, _ := t.dasCore.GetQuoteCell()
 				cellDepsMap = append(cellDepsMap, map[string]interface{}{
-					"name":  "QuoteCell",
-					"quote": cell.Quote(),
+					"QuoteCell": v.OutPoint,
+					"quote":     cell.Quote(),
 				})
 			case common.ArgsTimeCell:
 				cell, _ := t.dasCore.GetTimeCell()
 				cellDepsMap = append(cellDepsMap, map[string]interface{}{
-					"name":      "TimeCell",
+					"TimeCell":  v.OutPoint,
 					"timestamp": cell.Timestamp(),
 				})
 			case common.ArgsHeightCell:
 				cell, _ := t.dasCore.GetHeightCell()
 				cellDepsMap = append(cellDepsMap, map[string]interface{}{
-					"name":         "HeightCell",
+					"HeightCell":   v.OutPoint,
 					"block_number": cell.BlockNumber(),
 				})
 			}
@@ -107,8 +107,8 @@ func (t *TransactionParser) parserCellDeps(cellDeps []*types.CellDep) (cellDepsM
 			script := common.GetScript(config.Cfg.DasCore.DasContractCodeHash, common.Bytes2Hex(output.Type.Args))
 			if contractName, ok := core.DasContractByTypeIdMap[common.ScriptToTypeId(script).String()]; ok {
 				cellDepsMap = append(cellDepsMap, map[string]interface{}{
-					"name": string(contractName),
-					"type": t.convertOutputTypeScript(output),
+					string(contractName): v.OutPoint,
+					"output":             t.convertOutputTypeScript(output),
 				})
 				continue
 			}
@@ -117,22 +117,22 @@ func (t *TransactionParser) parserCellDeps(cellDeps []*types.CellDep) (cellDepsM
 		if output.Type != nil && output.Type.CodeHash.Hex() == config.Cfg.DasCore.DasConfigCodeHash {
 			if value, ok := core.DasConfigCellMap.Load(common.Bytes2Hex(output.Type.Args)); ok {
 				cellDepsMap = append(cellDepsMap, map[string]interface{}{
-					"name":         value.(*core.DasConfigCellInfo).Name,
-					"type":         t.convertOutputTypeScript(output),
-					"witness_hash": common.Bytes2Hex(res.Transaction.OutputsData[v.OutPoint.Index]),
+					value.(*core.DasConfigCellInfo).Name: v.OutPoint,
+					"output":                             t.convertOutputTypeScript(output),
+					"witness_hash":                       common.Bytes2Hex(res.Transaction.OutputsData[v.OutPoint.Index]),
 				})
 				continue
 			}
 		}
 
 		cellDepsMap = append(cellDepsMap, map[string]interface{}{
-			"unknown": v.OutPoint.TxHash.Hex(),
+			"unknown": v.OutPoint,
 		})
 	}
 	return
 }
 
-func (t *TransactionParser) parserInputs(inputs []*types.CellInput) (inputsMap []interface{}) {
+func (t *Parser) parserInputs(inputs []*types.CellInput) (inputsMap []interface{}) {
 	for _, v := range inputs {
 		res, err := t.ckbClient.GetTransactionByHash(v.PreviousOutput.TxHash)
 		if err != nil {
@@ -143,40 +143,42 @@ func (t *TransactionParser) parserInputs(inputs []*types.CellInput) (inputsMap [
 	return
 }
 
-func (t *TransactionParser) parserOutputs(outputs []*types.CellOutput, outputsData [][]byte) (outputsMap []interface{}) {
+func (t *Parser) parserOutputs(outputs []*types.CellOutput, outputsData [][]byte) (outputsMap []interface{}) {
 	for k, v := range outputs {
 		outputsMap = append(outputsMap, t.parserOutput(v, outputsData[k]))
 	}
 	return
 }
 
-func (t *TransactionParser) parserOutput(output *types.CellOutput, outputData []byte) (outputMap interface{}) {
+func (t *Parser) parserOutput(output *types.CellOutput, outputData []byte) (outputMap interface{}) {
 	if output.Type == nil {
 		return map[string]interface{}{
-			"name":     "normal-cell",
-			"capacity": output.Capacity,
-			"lock":     t.convertOutputLockScript(output),
-			"data":     common.Bytes2Hex(outputData),
+			"normal-cell": map[string]interface{}{
+				"output":      t.convertOutputLockScript(output),
+				"output_data": common.Bytes2Hex(outputData),
+			},
 		}
 	}
 
 	if contractName, ok := core.DasContractByTypeIdMap[output.Type.CodeHash.Hex()]; ok {
-		if string(contractName) == "account-cell-type" {
+		switch string(contractName) {
+		case "account-cell-type":
 			accountId, _ := common.OutputDataToAccountId(outputData)
 			return map[string]interface{}{
-				"name":       string(contractName),
-				"capacity":   output.Capacity,
-				"account_id": common.Bytes2Hex(accountId),
-				"account":    string(outputData[80:]), // Warn: can't convert empty account
-				"type":       t.convertOutputTypeScript(output),
-				"data":       common.Bytes2Hex(outputData),
+				string(contractName): map[string]interface{}{
+					"account":     string(outputData[80:]), // Warn: can't convert empty account
+					"account_id":  common.Bytes2Hex(accountId),
+					"output":      t.convertOutputTypeScript(output),
+					"output_data": common.Bytes2Hex(outputData),
+				},
 			}
-		}
-		return map[string]interface{}{
-			"name":     string(contractName),
-			"capacity": output.Capacity,
-			"type":     t.convertOutputTypeScript(output),
-			"data":     common.Bytes2Hex(outputData),
+		default:
+			return map[string]interface{}{
+				string(contractName): map[string]interface{}{
+					"output":      t.convertOutputTypeScript(output),
+					"output_data": common.Bytes2Hex(outputData),
+				},
+			}
 		}
 	}
 
@@ -185,23 +187,34 @@ func (t *TransactionParser) parserOutput(output *types.CellOutput, outputData []
 	}
 }
 
-func (t *TransactionParser) convertOutputLockScript(output *types.CellOutput) map[string]interface{} {
+func (t *Parser) convertOutputLockScript(output *types.CellOutput) map[string]interface{} {
 	return map[string]interface{}{
-		"code_hash": output.Lock.CodeHash,
-		"hash_type": output.Lock.HashType,
-		"args":      common.Bytes2Hex(output.Lock.Args),
+		"capacity": output.Capacity,
+		"lock": map[string]interface{}{
+			"code_hash": output.Lock.CodeHash.Hex(),
+			"hash_type": output.Lock.HashType,
+			"args":      common.Bytes2Hex(output.Lock.Args),
+		},
 	}
 }
 
-func (t *TransactionParser) convertOutputTypeScript(output *types.CellOutput) map[string]interface{} {
+func (t *Parser) convertOutputTypeScript(output *types.CellOutput) map[string]interface{} {
 	return map[string]interface{}{
-		"code_hash": output.Type.CodeHash,
-		"hash_type": output.Type.HashType,
-		"args":      common.Bytes2Hex(output.Type.Args),
+		"capacity": output.Capacity,
+		"lock": map[string]interface{}{
+			"code_hash": output.Lock.CodeHash.Hex(),
+			"hash_type": output.Lock.HashType,
+			"args":      common.Bytes2Hex(output.Lock.Args),
+		},
+		"type": map[string]interface{}{
+			"code_hash": output.Type.CodeHash.Hex(),
+			"hash_type": output.Type.HashType,
+			"args":      common.Bytes2Hex(output.Type.Args),
+		},
 	}
 }
 
-func (t *TransactionParser) parserWitnesses(transaction *types.Transaction) (witnessesMap []interface{}) {
+func (t *Parser) parserWitnesses(transaction *types.Transaction) (witnessesMap []interface{}) {
 	for _, witnessByte := range transaction.Witnesses {
 		witnessesMap = append(witnessesMap, witness.ParserWitnessData(witnessByte))
 	}

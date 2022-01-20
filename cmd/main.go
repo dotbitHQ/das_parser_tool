@@ -4,7 +4,7 @@ import (
 	"context"
 	"das_parser_tool/chain"
 	"das_parser_tool/config"
-	"das_parser_tool/transaction_parser"
+	"das_parser_tool/parser"
 	"flag"
 	"github.com/DeAccountSystems/das-lib/core"
 	"github.com/scorpiotzh/mylog"
@@ -68,7 +68,7 @@ func hashParser(c, h string) {
 	log.Info("contract ok")
 
 	// transaction parser
-	bp, err := transaction_parser.NewTransactionParser(transaction_parser.ParamsTransactionParser{
+	bp, err := parser.NewParser(parser.ParamsParser{
 		DasCore:   dc,
 		CkbClient: ckbClient,
 		Ctx:       ctxServer,
