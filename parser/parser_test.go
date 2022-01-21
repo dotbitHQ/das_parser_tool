@@ -93,3 +93,63 @@ func TestPropose(t *testing.T) {
 func TestConfirmProposal(t *testing.T) {
 	parserHash("0xe03ad8605220dba3a65f778ef86c9c07207410abc28462bee16b7977df1f174a")
 }
+
+func TestEditRecords(t *testing.T) {
+	parserHash("0xf077361d3078a6cab299e3d813c9fe5cb9916d92aa3052e45d2e79bda89db7ab")
+}
+
+func TestEditManager(t *testing.T) {
+	parserHash("0x023fed77f3a72c34dc9642aa7d542128a2668020193923852009be364981171d")
+}
+
+func TestRenewAccount(t *testing.T) {
+	parserHash("0xf633b25d3272cbb8aea0af58ad0e5430183e682bc3dea83f18c0bb38df908296")
+}
+
+func TestTransferAccount(t *testing.T) {
+	parserHash("0x477fdf091f553d1811599a3292198ee547a5b3cfb9d51f125c163c1c27dbc932")
+}
+
+func TestStartAccountSale(t *testing.T) {
+	parserHash("0x0b762bcd7679365be06696f7a8ff59472bc28b1294ee55374e840ee500f72436")
+}
+
+func TestEditAccountSale(t *testing.T) {
+	parserHash("0x208cf033969fec9ba2a8b889bf884804a33f7655db7e8c4f223c533614cdd33c")
+}
+
+func TestCancelAccountSale(t *testing.T) {
+	parserHash("0x89c60ffe04afea217f4cdf524805b4b98e0a42608ac7a4bcc4d0c4a0e4986382")
+}
+
+func TestBuyAccount(t *testing.T) {
+	parserHash("0xe388608052e2d4008336d6e6ab3f7ca457397df84fa043199191a3a7350f5b0d")
+}
+
+func TestMakeOffer(t *testing.T) {
+	parserHash("0x28d70b6fcc59290c3a73fcf5fc0e006b80cb461ac17e74223d75cf81d32706d1")
+}
+
+func TestEditOffer(t *testing.T) {
+	parserHash("0xed3e4a0c665ba970013ffde09cf1aecdab9dd03af103ffd88dfb35d1ddc6cfec")
+}
+
+func TestCancelOffer(t *testing.T) {
+	parserHash("0xfcef771cc7c7199d8ffac419b8b77fcd5581ff29a0cf1785ca59f38eade75587")
+}
+
+func TestAcceptOffer(t *testing.T) {
+	parserHash("0xff14b214049c9ff61660e58d11e1e06402aa2f45291218f7f0e2ca49c1c67684")
+}
+
+func TestDeclareReverseRecord(t *testing.T) {
+	parserHash("0x141bd83f467c631dde1384572871a24a2aff247dec8d07f0fce0a5a5d15180a7")
+}
+
+func TestRedeclareReverseRecord(t *testing.T) {
+	parserHash("0x1fc8520f73c2c5383ecd0c824a03ea7a61c4b71579704535bab3bda948cca296")
+}
+
+func TestRetractReverseRecord(t *testing.T) {
+	parserHash("0x39ff46cea5dfaeca4dc591d69913a9484507db30030de2e62024f7662214ee51")
+}

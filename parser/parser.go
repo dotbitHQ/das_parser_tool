@@ -163,11 +163,17 @@ func (t *Parser) parserOutput(output *types.CellOutput, outputData []byte) (outp
 	if contractName, ok := core.DasContractByTypeIdMap[output.Type.CodeHash.Hex()]; ok {
 		switch string(contractName) {
 		case "account-cell-type":
-			accountId, _ := common.OutputDataToAccountId(outputData)
+			id, _ := common.OutputDataToAccountId(outputData)
+			next, _ := common.GetAccountCellNextAccountIdFromOutputData(outputData)
+			expiredAt, _ := common.GetAccountCellExpiredAtFromOutputData(outputData)
 			return map[string]interface{}{
 				string(contractName): map[string]interface{}{
-					"account":     string(outputData[80:]), // Warn: can't convert empty account
-					"account_id":  common.Bytes2Hex(accountId),
+					"output_account": map[string]interface{}{
+						"account":    string(outputData[80:]), // Warn: can't convert empty account
+						"id":         common.Bytes2Hex(id),
+						"next":       common.Bytes2Hex(next),
+						"expired_at": expiredAt,
+					},
 					"output":      t.convertOutputTypeScript(output),
 					"output_data": common.Bytes2Hex(outputData),
 				},
