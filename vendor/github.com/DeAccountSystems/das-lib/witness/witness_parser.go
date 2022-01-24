@@ -195,7 +195,7 @@ func ParserAccountCell(witnessByte []byte) interface{} {
 		return parserDefaultWitness(witnessByte)
 	}
 
-	accountCellsData := map[string]interface{}{}
+	accountCells := map[string]interface{}{}
 	for _, v := range parserData(data) {
 		dataEntity, _ := molecule.DataEntityFromSlice(v["entity"].(*molecule.DataEntityOpt).AsSlice(), false)
 		if dataEntity == nil {
@@ -204,31 +204,31 @@ func ParserAccountCell(witnessByte []byte) interface{} {
 
 		version, _ := molecule.Bytes2GoU32(dataEntity.Version().RawData())
 		index, _ := molecule.Bytes2GoU32(dataEntity.Index().RawData())
-		var accountCellData map[string]interface{}
+		var accountCell map[string]interface{}
 		switch version {
 		case common.GoDataEntityVersion1:
-			accountCellData = parserAccountCellDataV1(dataEntity)
+			accountCell = parserAccountCellV1(dataEntity)
 		case common.GoDataEntityVersion2:
-			accountCellData = parserAccountCellData(dataEntity)
+			accountCell = parserAccountCell(dataEntity)
 		}
-		if accountCellData == nil {
+		if accountCell == nil {
 			return parserDefaultWitness(witnessByte)
 		}
-		accountCellsData[v["type"].(string)] = map[string]interface{}{
+		accountCells[v["type"].(string)] = map[string]interface{}{
 			"version":      version,
 			"index":        index,
-			"witness_hash": accountCellData["witness_hash"],
-			"entity":       accountCellData["entity"],
+			"witness_hash": accountCell["witness_hash"],
+			"entity":       accountCell["entity"],
 		}
 	}
 
 	return map[string]interface{}{
 		"witness":     common.Bytes2Hex(witnessByte),
-		"AccountCell": accountCellsData,
+		"AccountCell": accountCells,
 	}
 }
 
-func parserAccountCellDataV1(dataEntity *molecule.DataEntity) map[string]interface{} {
+func parserAccountCellV1(dataEntity *molecule.DataEntity) map[string]interface{} {
 	accountCellV1, _ := molecule.AccountCellDataV1FromSlice(dataEntity.Entity().RawData(), false)
 	if accountCellV1 == nil {
 		return nil
@@ -263,7 +263,7 @@ func parserAccountCellDataV1(dataEntity *molecule.DataEntity) map[string]interfa
 	}
 }
 
-func parserAccountCellData(dataEntity *molecule.DataEntity) map[string]interface{} {
+func parserAccountCell(dataEntity *molecule.DataEntity) map[string]interface{} {
 	accountCell, _ := molecule.AccountCellDataFromSlice(dataEntity.Entity().RawData(), false)
 	if accountCell == nil {
 		return nil
@@ -303,36 +303,134 @@ func parserAccountCellData(dataEntity *molecule.DataEntity) map[string]interface
 }
 
 func ParserAccountSaleCell(witnessByte []byte) interface{} {
-	accountSaleCell, _ := molecule.AccountSaleCellDataFromSlice(witnessByte[common.WitnessDasTableTypeEndIndex:], false)
-	if accountSaleCell != nil {
-		return map[string]interface{}{
-			"witness":         common.Bytes2Hex(witnessByte),
-			"witness_hash":    common.Bytes2Hex(common.Blake2b(accountSaleCell.AsSlice())),
-			"AccountSaleCell": map[string]interface{}{},
+	data, _ := molecule.DataFromSlice(witnessByte[common.WitnessDasTableTypeEndIndex:], false)
+	if data == nil {
+		return parserDefaultWitness(witnessByte)
+	}
+
+	accountSaleCells := map[string]interface{}{}
+	for _, v := range parserData(data) {
+		dataEntity, _ := molecule.DataEntityFromSlice(v["entity"].(*molecule.DataEntityOpt).AsSlice(), false)
+		if dataEntity == nil {
+			return parserDefaultWitness(witnessByte)
+		}
+
+		version, _ := molecule.Bytes2GoU32(dataEntity.Version().RawData())
+		index, _ := molecule.Bytes2GoU32(dataEntity.Index().RawData())
+		var accountSaleCell map[string]interface{}
+		switch version {
+		case common.GoDataEntityVersion1:
+			accountSaleCell = parserAccountSaleCellV1(dataEntity)
+		case common.GoDataEntityVersion2:
+			accountSaleCell = parserAccountSaleCell(dataEntity)
+		}
+		if accountSaleCell == nil {
+			return parserDefaultWitness(witnessByte)
+		}
+
+		accountSaleCells[v["type"].(string)] = map[string]interface{}{
+			"version":      version,
+			"index":        index,
+			"witness_hash": accountSaleCell["witness_hash"],
+			"entity":       accountSaleCell["entity"],
 		}
 	}
 
-	accountSaleCellV1, _ := molecule.AccountSaleCellDataV1FromSlice(witnessByte[common.WitnessDasTableTypeEndIndex:], false)
-	if accountSaleCellV1 != nil {
-		return map[string]interface{}{
-			"witness":         common.Bytes2Hex(witnessByte),
-			"witness_hash":    common.Bytes2Hex(common.Blake2b(accountSaleCellV1.AsSlice())),
-			"AccountSaleCell": map[string]interface{}{},
-		}
+	return map[string]interface{}{
+		"witness":         common.Bytes2Hex(witnessByte),
+		"AccountSaleCell": accountSaleCells,
 	}
-	return parserDefaultWitness(witnessByte)
+}
+
+func parserAccountSaleCellV1(dataEntity *molecule.DataEntity) map[string]interface{} {
+	accountSaleCellV1, _ := molecule.AccountSaleCellDataV1FromSlice(dataEntity.Entity().RawData(), false)
+	if accountSaleCellV1 == nil {
+		return nil
+	}
+	price, _ := molecule.Bytes2GoU64(accountSaleCellV1.Price().RawData())
+	startedAt, _ := molecule.Bytes2GoU64(accountSaleCellV1.StartedAt().RawData())
+
+	return map[string]interface{}{
+		"witness_hash": common.Bytes2Hex(common.Blake2b(accountSaleCellV1.AsSlice())),
+		"entity": map[string]interface{}{
+			"id":          common.Bytes2Hex(accountSaleCellV1.AccountId().RawData()),
+			"account":     string(accountSaleCellV1.Account().RawData()),
+			"price":       price,
+			"description": string(accountSaleCellV1.Description().RawData()),
+			"started_at":  startedAt,
+		},
+	}
+}
+
+func parserAccountSaleCell(dataEntity *molecule.DataEntity) map[string]interface{} {
+	accountSaleCell, _ := molecule.AccountSaleCellDataFromSlice(dataEntity.Entity().RawData(), false)
+	if accountSaleCell == nil {
+		return nil
+	}
+	price, _ := molecule.Bytes2GoU64(accountSaleCell.Price().RawData())
+	startedAt, _ := molecule.Bytes2GoU64(accountSaleCell.StartedAt().RawData())
+
+	return map[string]interface{}{
+		"witness_hash": common.Bytes2Hex(common.Blake2b(accountSaleCell.AsSlice())),
+		"entity": map[string]interface{}{
+			"id":          common.Bytes2Hex(accountSaleCell.AccountId().RawData()),
+			"account":     string(accountSaleCell.Account().RawData()),
+			"price":       price,
+			"description": string(accountSaleCell.Description().RawData()),
+			"started_at":  startedAt,
+		},
+	}
 }
 
 func ParserAccountAuctionCell(witnessByte []byte) interface{} {
-	accountAuctionCell, _ := molecule.AccountAuctionCellDataFromSlice(witnessByte[common.WitnessDasTableTypeEndIndex:], false)
-	if accountAuctionCell == nil {
+	data, _ := molecule.DataFromSlice(witnessByte[common.WitnessDasTableTypeEndIndex:], false)
+	if data == nil {
 		return parserDefaultWitness(witnessByte)
+	}
+
+	accountAuctionCells := map[string]interface{}{}
+	for _, v := range parserData(data) {
+		dataEntity, _ := molecule.DataEntityFromSlice(v["entity"].(*molecule.DataEntityOpt).AsSlice(), false)
+		if dataEntity == nil {
+			return parserDefaultWitness(witnessByte)
+		}
+
+		version, _ := molecule.Bytes2GoU32(dataEntity.Version().RawData())
+		index, _ := molecule.Bytes2GoU32(dataEntity.Index().RawData())
+		accountAuctionCell, _ := molecule.AccountAuctionCellDataFromSlice(dataEntity.Entity().RawData(), false)
+		if accountAuctionCell == nil {
+			return parserDefaultWitness(witnessByte)
+		}
+
+		openingPrice, _ := molecule.Bytes2GoU64(accountAuctionCell.OpeningPrice().RawData())
+		incrementRateEachBid, _ := molecule.Bytes2GoU32(accountAuctionCell.IncrementRateEachBid().RawData())
+		startedAt, _ := molecule.Bytes2GoU64(accountAuctionCell.StartedAt().RawData())
+		endedAt, _ := molecule.Bytes2GoU64(accountAuctionCell.EndedAt().RawData())
+		currentBidPrice, _ := molecule.Bytes2GoU64(accountAuctionCell.CurrentBidPrice().RawData())
+		prevBidderProfitRate, _ := molecule.Bytes2GoU32(accountAuctionCell.PrevBidderProfitRate().RawData())
+
+		accountAuctionCells[v["type"].(string)] = map[string]interface{}{
+			"version":      version,
+			"index":        index,
+			"witness_hash": common.Bytes2Hex(common.Blake2b(accountAuctionCell.AsSlice())),
+			"entity": map[string]interface{}{
+				"id":                      common.Bytes2Hex(accountAuctionCell.AccountId().RawData()),
+				"account":                 string(accountAuctionCell.Account().RawData()),
+				"description":             string(accountAuctionCell.Description().RawData()),
+				"opening_price":           openingPrice,
+				"incrementRateEachBid":    incrementRateEachBid,
+				"started_at":              startedAt,
+				"ended_at":                endedAt,
+				"current_bidder_lock":     parserScript(accountAuctionCell.CurrentBidderLock()),
+				"current_bid_price":       currentBidPrice,
+				"prev_bidder_profit_rate": prevBidderProfitRate,
+			},
+		}
 	}
 
 	return map[string]interface{}{
 		"witness":            common.Bytes2Hex(witnessByte),
-		"witness_hash":       common.Bytes2Hex(common.Blake2b(accountAuctionCell.AsSlice())),
-		"AccountAuctionCell": map[string]interface{}{},
+		"AccountAuctionCell": accountAuctionCells,
 	}
 }
 
@@ -342,7 +440,7 @@ func ParserProposalCell(witnessByte []byte) interface{} {
 		return parserDefaultWitness(witnessByte)
 	}
 
-	proposalCellsData := map[string]interface{}{}
+	proposalCells := map[string]interface{}{}
 	for _, v := range parserData(data) {
 		dataEntity, _ := molecule.DataEntityFromSlice(v["entity"].(*molecule.DataEntityOpt).AsSlice(), false)
 		if dataEntity == nil {
@@ -356,7 +454,6 @@ func ParserProposalCell(witnessByte []byte) interface{} {
 			return parserDefaultWitness(witnessByte)
 		}
 
-		proposalLock, _ := molecule.ScriptFromSlice(proposalCell.ProposerLock().AsSlice(), false)
 		createdAtHeight, _ := molecule.Bytes2GoU64(proposalCell.CreatedAtHeight().RawData())
 		var slices []interface{}
 		for i := uint(0); i < proposalCell.Slices().Len(); i++ {
@@ -364,23 +461,22 @@ func ParserProposalCell(witnessByte []byte) interface{} {
 			var proposalItems []interface{}
 			for k := uint(0); k < slice.Len(); k++ {
 				proposalItem := slice.Get(k)
-				id := common.Bytes2Hex(proposalItem.AccountId().RawData())
 				itemType, _ := molecule.Bytes2GoU8(proposalItem.ItemType().RawData())
-				next := common.Bytes2Hex(proposalItem.Next().RawData())
 				proposalItems = append(proposalItems, map[string]interface{}{
-					"id":        id,
+					"id":        common.Bytes2Hex(proposalItem.AccountId().RawData()),
 					"item_type": itemType,
-					"next":      next,
+					"next":      common.Bytes2Hex(proposalItem.Next().RawData()),
 				})
 			}
 			slices = append(slices, proposalItems)
 		}
-		proposalCellsData[v["type"].(string)] = map[string]interface{}{
+
+		proposalCells[v["type"].(string)] = map[string]interface{}{
 			"version":      version,
 			"index":        index,
 			"witness_hash": common.Bytes2Hex(common.Blake2b(proposalCell.AsSlice())),
 			"entity": map[string]interface{}{
-				"proposal_lock":     parserScript(proposalLock),
+				"proposal_lock":     parserScript(proposalCell.ProposerLock()),
 				"created_at_height": createdAtHeight,
 				"slices":            slices,
 			},
@@ -389,7 +485,7 @@ func ParserProposalCell(witnessByte []byte) interface{} {
 
 	return map[string]interface{}{
 		"witness":      common.Bytes2Hex(witnessByte),
-		"ProposalCell": proposalCellsData,
+		"ProposalCell": proposalCells,
 	}
 }
 
@@ -399,7 +495,7 @@ func ParserPreAccountCell(witnessByte []byte) interface{} {
 		return parserDefaultWitness(witnessByte)
 	}
 
-	var preAccountCellData []interface{}
+	preAccountCells := map[string]interface{}{}
 	for _, v := range parserData(data) {
 		dataEntity, _ := molecule.DataEntityFromSlice(v["entity"].(*molecule.DataEntityOpt).AsSlice(), false)
 		if dataEntity == nil {
@@ -413,38 +509,34 @@ func ParserPreAccountCell(witnessByte []byte) interface{} {
 			return parserDefaultWitness(witnessByte)
 		}
 
-		refundLock, _ := molecule.ScriptFromSlice(preAccountCell.RefundLock().AsSlice(), false)
-		inviterLock, _ := molecule.ScriptFromSlice(preAccountCell.InviterLock().AsSlice(), false)
-		channelLock, _ := molecule.ScriptFromSlice(preAccountCell.ChannelLock().AsSlice(), false)
-		price, _ := molecule.PriceConfigFromSlice(preAccountCell.Price().AsSlice(), false)
+		inviterLock, _ := preAccountCell.InviterLock().IntoScript()
+		channelLock, _ := preAccountCell.ChannelLock().IntoScript()
 		quote, _ := molecule.Bytes2GoU64(preAccountCell.Quote().RawData())
 		invitedDiscount, _ := molecule.Bytes2GoU32(preAccountCell.InvitedDiscount().RawData())
 		createdAt, _ := molecule.Bytes2GoU64(preAccountCell.CreatedAt().RawData())
 
-		preAccountCellData = append(preAccountCellData, map[string]interface{}{
-			v["type"].(string): map[string]interface{}{
-				"version":      version,
-				"index":        index,
-				"witness_hash": common.Bytes2Hex(common.Blake2b(preAccountCell.AsSlice())),
-				"entity": map[string]interface{}{
-					"account":          common.AccountCharsToAccount(preAccountCell.Account()),
-					"owner_lock_args":  common.Bytes2Hex(preAccountCell.OwnerLockArgs().RawData()),
-					"inviter_id":       common.Bytes2Hex(preAccountCell.InviterId().RawData()),
-					"refund_lock":      parserScript(refundLock),
-					"inviter_lock":     parserScript(inviterLock),
-					"channel_lock":     parserScript(channelLock),
-					"price":            parserConfig(price),
-					"quote":            quote,
-					"invited_discount": invitedDiscount,
-					"created_at":       createdAt,
-				},
+		preAccountCells[v["type"].(string)] = map[string]interface{}{
+			"version":      version,
+			"index":        index,
+			"witness_hash": common.Bytes2Hex(common.Blake2b(preAccountCell.AsSlice())),
+			"entity": map[string]interface{}{
+				"account":          common.AccountCharsToAccount(preAccountCell.Account()),
+				"owner_lock_args":  common.Bytes2Hex(preAccountCell.OwnerLockArgs().RawData()),
+				"inviter_id":       common.Bytes2Hex(preAccountCell.InviterId().RawData()),
+				"refund_lock":      parserScript(preAccountCell.RefundLock()),
+				"inviter_lock":     parserScript(inviterLock),
+				"channel_lock":     parserScript(channelLock),
+				"price":            parserConfig(preAccountCell.Price()),
+				"quote":            quote,
+				"invited_discount": invitedDiscount,
+				"created_at":       createdAt,
 			},
-		})
+		}
 	}
 
 	return map[string]interface{}{
 		"witness":        common.Bytes2Hex(witnessByte),
-		"PreAccountCell": preAccountCellData,
+		"PreAccountCell": preAccountCells,
 	}
 }
 
@@ -454,7 +546,7 @@ func ParserIncomeCell(witnessByte []byte) interface{} {
 		return parserDefaultWitness(witnessByte)
 	}
 
-	var incomeCellData []interface{}
+	incomeCells := map[string]interface{}{}
 	for _, v := range parserData(data) {
 		dataEntity, _ := molecule.DataEntityFromSlice(v["entity"].(*molecule.DataEntityOpt).AsSlice(), false)
 		if dataEntity == nil {
@@ -482,38 +574,64 @@ func ParserIncomeCell(witnessByte []byte) interface{} {
 			})
 		}
 
-		incomeCellData = append(incomeCellData, map[string]interface{}{
-			v["type"].(string): map[string]interface{}{
-				"version":      version,
-				"index":        index,
-				"witness_hash": common.Bytes2Hex(common.Blake2b(incomeCell.AsSlice())),
-				"entity": map[string]interface{}{
-					"creator": map[string]interface{}{
-						"code_hash": common.Bytes2Hex(incomeCell.Creator().CodeHash().RawData()),
-						"hash_type": common.Bytes2Hex(incomeCell.Creator().HashType().AsSlice()),
-					},
-					"records": recordsMaps,
+		incomeCells[v["type"].(string)] = map[string]interface{}{
+			"version":      version,
+			"index":        index,
+			"witness_hash": common.Bytes2Hex(common.Blake2b(incomeCell.AsSlice())),
+			"entity": map[string]interface{}{
+				"creator": map[string]interface{}{
+					"code_hash": common.Bytes2Hex(incomeCell.Creator().CodeHash().RawData()),
+					"hash_type": common.Bytes2Hex(incomeCell.Creator().HashType().AsSlice()),
 				},
+				"records": recordsMaps,
 			},
-		})
+		}
 	}
 
 	return map[string]interface{}{
 		"witness":    common.Bytes2Hex(witnessByte),
-		"IncomeCell": incomeCellData,
+		"IncomeCell": incomeCells,
 	}
 }
 
 func ParserOfferCell(witnessByte []byte) interface{} {
-	offerCell, _ := molecule.OfferCellDataFromSlice(witnessByte[common.WitnessDasTableTypeEndIndex:], false)
-	if offerCell == nil {
+	data, _ := molecule.DataFromSlice(witnessByte[common.WitnessDasTableTypeEndIndex:], false)
+	if data == nil {
 		return parserDefaultWitness(witnessByte)
 	}
 
+	offerCells := map[string]interface{}{}
+	for _, v := range parserData(data) {
+		dataEntity, _ := molecule.DataEntityFromSlice(v["entity"].(*molecule.DataEntityOpt).AsSlice(), false)
+		if dataEntity == nil {
+			return parserDefaultWitness(witnessByte)
+		}
+
+		version, _ := molecule.Bytes2GoU32(dataEntity.Version().RawData())
+		index, _ := molecule.Bytes2GoU32(dataEntity.Index().RawData())
+		offerCell, _ := molecule.OfferCellDataFromSlice(dataEntity.Entity().RawData(), false)
+		if offerCell == nil {
+			return parserDefaultWitness(witnessByte)
+		}
+		price, _ := molecule.Bytes2GoU64(offerCell.Price().RawData())
+
+		offerCells[v["type"].(string)] = map[string]interface{}{
+			"version":      version,
+			"index":        index,
+			"witness_hash": common.Bytes2Hex(common.Blake2b(offerCell.AsSlice())),
+			"entity": map[string]interface{}{
+				"account":      string(offerCell.Account().RawData()),
+				"price":        price,
+				"message":      string(offerCell.Message().RawData()),
+				"inviter_lock": parserScript(offerCell.InviterLock()),
+				"channel_lock": parserScript(offerCell.ChannelLock()),
+			},
+		}
+	}
+
 	return map[string]interface{}{
-		"witness":      common.Bytes2Hex(witnessByte),
-		"witness_hash": common.Bytes2Hex(common.Blake2b(offerCell.AsSlice())),
-		"OfferCell":    map[string]interface{}{},
+		"witness":   common.Bytes2Hex(witnessByte),
+		"OfferCell": offerCells,
 	}
 }
 
@@ -523,24 +641,39 @@ func ParserConfigCellAccount(witnessByte []byte) interface{} {
 		return parserDefaultWitness(witnessByte)
 	}
 
+	maxLength, _ := molecule.Bytes2GoU32(configCellAccount.MaxLength().RawData())
+	basicCapacity, _ := molecule.Bytes2GoU64(configCellAccount.BasicCapacity().RawData())
+	preparedFeeCapacity, _ := molecule.Bytes2GoU64(configCellAccount.PreparedFeeCapacity().RawData())
+	expirationGracePeriod, _ := molecule.Bytes2GoU32(configCellAccount.ExpirationGracePeriod().RawData())
+	recordMinTtl, _ := molecule.Bytes2GoU32(configCellAccount.RecordMinTtl().RawData())
+	recordSizeLimit, _ := molecule.Bytes2GoU32(configCellAccount.RecordSizeLimit().RawData())
+	transferAccountFee, _ := molecule.Bytes2GoU64(configCellAccount.TransferAccountFee().RawData())
+	editManagerFee, _ := molecule.Bytes2GoU64(configCellAccount.EditManagerFee().RawData())
+	editRecordsFee, _ := molecule.Bytes2GoU64(configCellAccount.EditRecordsFee().RawData())
+	commonFee, _ := molecule.Bytes2GoU64(configCellAccount.CommonFee().RawData())
+	transferAccountThrottle, _ := molecule.Bytes2GoU32(configCellAccount.TransferAccountThrottle().RawData())
+	editManagerThrottle, _ := molecule.Bytes2GoU32(configCellAccount.EditManagerThrottle().RawData())
+	editRecordsThrottle, _ := molecule.Bytes2GoU32(configCellAccount.EditRecordsThrottle().RawData())
+	commonThrottle, _ := molecule.Bytes2GoU32(configCellAccount.CommonThrottle().RawData())
+
 	return map[string]interface{}{
 		"witness":      common.Bytes2Hex(witnessByte),
 		"witness_hash": common.Bytes2Hex(common.Blake2b(configCellAccount.AsSlice())),
 		"ConfigCellAccount": map[string]interface{}{
-			"max_length":                common.Bytes2Hex(configCellAccount.MaxLength().RawData()),
-			"basic_capacity":            common.Bytes2Hex(configCellAccount.BasicCapacity().RawData()),
-			"prepared_fee_capacity":     common.Bytes2Hex(configCellAccount.PreparedFeeCapacity().RawData()),
-			"expiration_grace_period":   common.Bytes2Hex(configCellAccount.ExpirationGracePeriod().RawData()),
-			"record_min_ttl":            common.Bytes2Hex(configCellAccount.RecordMinTtl().RawData()),
-			"record_size_limit":         common.Bytes2Hex(configCellAccount.RecordSizeLimit().RawData()),
-			"transfer_account_fee":      common.Bytes2Hex(configCellAccount.TransferAccountFee().RawData()),
-			"edit_manager_fee":          common.Bytes2Hex(configCellAccount.EditManagerFee().RawData()),
-			"edit_records_fee":          common.Bytes2Hex(configCellAccount.EditRecordsFee().RawData()),
-			"common_fee":                common.Bytes2Hex(configCellAccount.CommonFee().RawData()),
-			"transfer_account_throttle": common.Bytes2Hex(configCellAccount.TransferAccountThrottle().RawData()),
-			"edit_manager_throttle":     common.Bytes2Hex(configCellAccount.EditManagerThrottle().RawData()),
-			"edit_records_throttle":     common.Bytes2Hex(configCellAccount.EditRecordsThrottle().RawData()),
-			"common_throttle":           common.Bytes2Hex(configCellAccount.CommonThrottle().RawData()),
+			"max_length":                maxLength,
+			"basic_capacity":            basicCapacity,
+			"prepared_fee_capacity":     preparedFeeCapacity,
+			"expiration_grace_period":   expirationGracePeriod,
+			"record_min_ttl":            recordMinTtl,
+			"record_size_limit":         recordSizeLimit,
+			"transfer_account_fee":      transferAccountFee,
+			"edit_manager_fee":          editManagerFee,
+			"edit_records_fee":          editRecordsFee,
+			"common_fee":                commonFee,
+			"transfer_account_throttle": transferAccountThrottle,
+			"edit_manager_throttle":     editManagerThrottle,
+			"edit_records_throttle":     editRecordsThrottle,
+			"common_throttle":           commonThrottle,
 		},
 	}
 }
@@ -551,12 +684,14 @@ func ParserConfigCellApply(witnessByte []byte) interface{} {
 		return parserDefaultWitness(witnessByte)
 	}
 
+	applyMinWaitingBlockNumber, _ := molecule.Bytes2GoU32(configCellApply.ApplyMinWaitingBlockNumber().RawData())
+	applyMaxWaitingBlockNumber, _ := molecule.Bytes2GoU32(configCellApply.ApplyMaxWaitingBlockNumber().RawData())
 	return map[string]interface{}{
 		"witness":      common.Bytes2Hex(witnessByte),
 		"witness_hash": common.Bytes2Hex(common.Blake2b(configCellApply.AsSlice())),
 		"ConfigCellApply": map[string]interface{}{
-			"apply_min_waiting_block_number": common.Bytes2Hex(configCellApply.ApplyMinWaitingBlockNumber().RawData()),
-			"apply_max_waiting_block_number": common.Bytes2Hex(configCellApply.ApplyMaxWaitingBlockNumber().RawData()),
+			"apply_min_waiting_block_number": applyMinWaitingBlockNumber,
+			"apply_max_waiting_block_number": applyMaxWaitingBlockNumber,
 		},
 	}
 }
@@ -567,13 +702,16 @@ func ParserConfigCellIncome(witnessByte []byte) interface{} {
 		return parserDefaultWitness(witnessByte)
 	}
 
+	basicCapacity, _ := molecule.Bytes2GoU64(configCellIncome.BasicCapacity().RawData())
+	maxRecords, _ := molecule.Bytes2GoU32(configCellIncome.MaxRecords().RawData())
+	minTransferCapacity, _ := molecule.Bytes2GoU64(configCellIncome.MinTransferCapacity().RawData())
 	return map[string]interface{}{
 		"witness":      common.Bytes2Hex(witnessByte),
 		"witness_hash": common.Bytes2Hex(common.Blake2b(configCellIncome.AsSlice())),
 		"ConfigCellIncome": map[string]interface{}{
-			"basic_capacity":        common.Bytes2Hex(configCellIncome.BasicCapacity().RawData()),
-			"max_records":           common.Bytes2Hex(configCellIncome.MaxRecords().RawData()),
-			"min_transfer_capacity": common.Bytes2Hex(configCellIncome.MinTransferCapacity().RawData()),
+			"basic_capacity":        basicCapacity,
+			"max_records":           maxRecords,
+			"min_transfer_capacity": minTransferCapacity,
 		},
 	}
 }
@@ -584,11 +722,17 @@ func ParserConfigCellMain(witnessByte []byte) interface{} {
 		return parserDefaultWitness(witnessByte)
 	}
 
+	status, _ := molecule.Bytes2GoU8(configCellMain.Status().RawData())
+	ckbSignAllIndex, _ := molecule.Bytes2GoU32(configCellMain.DasLockOutPointTable().CkbSignall().Index().RawData())
+	ckbMultiSignIndex, _ := molecule.Bytes2GoU32(configCellMain.DasLockOutPointTable().CkbMultisign().Index().RawData())
+	ckbAnyoneCanPayIndex, _ := molecule.Bytes2GoU32(configCellMain.DasLockOutPointTable().CkbAnyoneCanPay().Index().RawData())
+	ethIndex, _ := molecule.Bytes2GoU32(configCellMain.DasLockOutPointTable().Eth().Index().RawData())
+	tronIndex, _ := molecule.Bytes2GoU32(configCellMain.DasLockOutPointTable().Tron().Index().RawData())
 	return map[string]interface{}{
 		"witness":      common.Bytes2Hex(witnessByte),
 		"witness_hash": common.Bytes2Hex(common.Blake2b(configCellMain.AsSlice())),
 		"ConfigCellMain": map[string]interface{}{
-			"status": common.Bytes2Hex(configCellMain.Status().RawData()),
+			"status": status,
 			"type_id_table": map[string]interface{}{
 				"account_cell":         common.Bytes2Hex(configCellMain.TypeIdTable().AccountCell().RawData()),
 				"apply_register_cell":  common.Bytes2Hex(configCellMain.TypeIdTable().ApplyRegisterCell().RawData()),
@@ -602,25 +746,25 @@ func ParserConfigCellMain(witnessByte []byte) interface{} {
 				"reverse_record_cell":  common.Bytes2Hex(configCellMain.TypeIdTable().ReverseRecordCell().RawData()),
 			},
 			"das_lock_out_point_table": map[string]interface{}{
-				"ckb_signall": map[string]interface{}{
+				"ckb_sign_all": map[string]interface{}{
 					"tx_hash": common.Bytes2Hex(configCellMain.DasLockOutPointTable().CkbSignall().TxHash().RawData()),
-					"index":   common.Bytes2Hex(configCellMain.DasLockOutPointTable().CkbSignall().Index().RawData()),
+					"index":   ckbSignAllIndex,
 				},
-				"ckb_multisign": map[string]interface{}{
+				"ckb_multi_sign": map[string]interface{}{
 					"tx_hash": common.Bytes2Hex(configCellMain.DasLockOutPointTable().CkbMultisign().TxHash().RawData()),
-					"index":   common.Bytes2Hex(configCellMain.DasLockOutPointTable().CkbMultisign().Index().RawData()),
+					"index":   ckbMultiSignIndex,
 				},
 				"ckb_anyone_can_pay": map[string]interface{}{
 					"tx_hash": common.Bytes2Hex(configCellMain.DasLockOutPointTable().CkbAnyoneCanPay().TxHash().RawData()),
-					"index":   common.Bytes2Hex(configCellMain.DasLockOutPointTable().CkbAnyoneCanPay().Index().RawData()),
+					"index":   ckbAnyoneCanPayIndex,
 				},
 				"eth": map[string]interface{}{
 					"tx_hash": common.Bytes2Hex(configCellMain.DasLockOutPointTable().Eth().TxHash().RawData()),
-					"index":   common.Bytes2Hex(configCellMain.DasLockOutPointTable().Eth().Index().RawData()),
+					"index":   ethIndex,
 				},
 				"tron": map[string]interface{}{
 					"tx_hash": common.Bytes2Hex(configCellMain.DasLockOutPointTable().Tron().TxHash().RawData()),
-					"index":   common.Bytes2Hex(configCellMain.DasLockOutPointTable().Tron().Index().RawData()),
+					"index":   tronIndex,
 				},
 			},
 		},
@@ -635,16 +779,16 @@ func ParserConfigCellPrice(witnessByte []byte) interface{} {
 
 	var prices []interface{}
 	for i := uint(0); i < configCellPrice.Prices().Len(); i++ {
-		price, _ := molecule.PriceConfigFromSlice(configCellPrice.Prices().Get(i).AsSlice(), false)
-		prices = append(prices, parserConfig(price))
+		prices = append(prices, parserConfig(configCellPrice.Prices().Get(i)))
 	}
 
+	invitedDiscount, _ := molecule.Bytes2GoU32(configCellPrice.Discount().InvitedDiscount().RawData())
 	return map[string]interface{}{
 		"witness":      common.Bytes2Hex(witnessByte),
 		"witness_hash": common.Bytes2Hex(common.Blake2b(configCellPrice.AsSlice())),
 		"ConfigCellPrice": map[string]interface{}{
 			"discount": map[string]interface{}{
-				"invited_discount": common.Bytes2Hex(configCellPrice.Discount().InvitedDiscount().RawData()),
+				"invited_discount": invitedDiscount,
 			},
 			"prices": prices,
 		},
@@ -657,15 +801,20 @@ func ParserConfigCellProposal(witnessByte []byte) interface{} {
 		return parserDefaultWitness(witnessByte)
 	}
 
+	proposalMinConfirmInterval, _ := molecule.Bytes2GoU8(configCellProposal.ProposalMinConfirmInterval().RawData())
+	proposalMinRecycleInterval, _ := molecule.Bytes2GoU8(configCellProposal.ProposalMinRecycleInterval().RawData())
+	proposalMinExtendInterval, _ := molecule.Bytes2GoU8(configCellProposal.ProposalMinExtendInterval().RawData())
+	proposalMaxAccountAffect, _ := molecule.Bytes2GoU32(configCellProposal.ProposalMaxAccountAffect().RawData())
+	proposalMaxPreAccountContain, _ := molecule.Bytes2GoU32(configCellProposal.ProposalMaxPreAccountContain().RawData())
 	return map[string]interface{}{
 		"witness":      common.Bytes2Hex(witnessByte),
 		"witness_hash": common.Bytes2Hex(common.Blake2b(configCellProposal.AsSlice())),
 		"ConfigCellProposal": map[string]interface{}{
-			"proposal_min_confirm_interval":    common.Bytes2Hex(configCellProposal.ProposalMinConfirmInterval().RawData()),
-			"proposal_min_recycle_interval":    common.Bytes2Hex(configCellProposal.ProposalMinRecycleInterval().RawData()),
-			"proposal_min_extend_interval":     common.Bytes2Hex(configCellProposal.ProposalMinExtendInterval().RawData()),
-			"proposal_max_account_affect":      common.Bytes2Hex(configCellProposal.ProposalMaxAccountAffect().RawData()),
-			"proposal_max_pre_account_contain": common.Bytes2Hex(configCellProposal.ProposalMaxPreAccountContain().RawData()),
+			"proposal_min_confirm_interval":    proposalMinConfirmInterval,
+			"proposal_min_recycle_interval":    proposalMinRecycleInterval,
+			"proposal_min_extend_interval":     proposalMinExtendInterval,
+			"proposal_max_account_affect":      proposalMaxAccountAffect,
+			"proposal_max_pre_account_contain": proposalMaxPreAccountContain,
 		},
 	}
 }
@@ -676,22 +825,35 @@ func ParserConfigCellProfitRate(witnessByte []byte) interface{} {
 		return parserDefaultWitness(witnessByte)
 	}
 
+	inviter, _ := molecule.Bytes2GoU32(configCellProfitRate.Inviter().RawData())
+	channel, _ := molecule.Bytes2GoU32(configCellProfitRate.Channel().RawData())
+	proposalCreate, _ := molecule.Bytes2GoU32(configCellProfitRate.ProposalCreate().RawData())
+	proposalConfirm, _ := molecule.Bytes2GoU32(configCellProfitRate.ProposalConfirm().RawData())
+	incomeConsolidate, _ := molecule.Bytes2GoU32(configCellProfitRate.IncomeConsolidate().RawData())
+	saleBuyerInviter, _ := molecule.Bytes2GoU32(configCellProfitRate.SaleBuyerInviter().RawData())
+	saleBuyerChannel, _ := molecule.Bytes2GoU32(configCellProfitRate.SaleBuyerChannel().RawData())
+	saleDas, _ := molecule.Bytes2GoU32(configCellProfitRate.SaleDas().RawData())
+	auctionBidderInviter, _ := molecule.Bytes2GoU32(configCellProfitRate.AuctionBidderInviter().RawData())
+	auctionBidderChannel, _ := molecule.Bytes2GoU32(configCellProfitRate.AuctionBidderChannel().RawData())
+	auctionDas, _ := molecule.Bytes2GoU32(configCellProfitRate.AuctionDas().RawData())
+	auctionPrevBidder, _ := molecule.Bytes2GoU32(configCellProfitRate.AuctionPrevBidder().RawData())
+
 	return map[string]interface{}{
 		"witness":      common.Bytes2Hex(witnessByte),
 		"witness_hash": common.Bytes2Hex(common.Blake2b(configCellProfitRate.AsSlice())),
 		"ConfigCellProfitRate": map[string]interface{}{
-			"inviter":                common.Bytes2Hex(configCellProfitRate.Inviter().RawData()),
-			"channel":                common.Bytes2Hex(configCellProfitRate.Channel().RawData()),
-			"proposal_create":        common.Bytes2Hex(configCellProfitRate.ProposalCreate().RawData()),
-			"proposal_confirm":       common.Bytes2Hex(configCellProfitRate.ProposalConfirm().RawData()),
-			"income_consolidate":     common.Bytes2Hex(configCellProfitRate.IncomeConsolidate().RawData()),
-			"sale_buyer_inviter":     common.Bytes2Hex(configCellProfitRate.SaleBuyerInviter().RawData()),
-			"sale_buyer_channel":     common.Bytes2Hex(configCellProfitRate.SaleBuyerChannel().RawData()),
-			"sale_das":               common.Bytes2Hex(configCellProfitRate.SaleDas().RawData()),
-			"auction_bidder_inviter": common.Bytes2Hex(configCellProfitRate.AuctionBidderInviter().RawData()),
-			"auction_bidder_channel": common.Bytes2Hex(configCellProfitRate.AuctionBidderChannel().RawData()),
-			"auction_das":            common.Bytes2Hex(configCellProfitRate.AuctionDas().RawData()),
-			"auction_prev_bidder":    common.Bytes2Hex(configCellProfitRate.AuctionPrevBidder().RawData()),
+			"inviter":                inviter,
+			"channel":                channel,
+			"proposal_create":        proposalCreate,
+			"proposal_confirm":       proposalConfirm,
+			"income_consolidate":     incomeConsolidate,
+			"sale_buyer_inviter":     saleBuyerInviter,
+			"sale_buyer_channel":     saleBuyerChannel,
+			"sale_das":               saleDas,
+			"auction_bidder_inviter": auctionBidderInviter,
+			"auction_bidder_channel": auctionBidderChannel,
+			"auction_das":            auctionDas,
+			"auction_prev_bidder":    auctionPrevBidder,
 		},
 	}
 }
@@ -722,10 +884,13 @@ func ParserConfigCellRelease(witnessByte []byte) interface{} {
 	var releaseRules []interface{}
 	for i := uint(0); i < configCellRelease.ReleaseRules().Len(); i++ {
 		releaseRule := configCellRelease.ReleaseRules().Get(i)
+		length, _ := molecule.Bytes2GoU32(releaseRule.Length().RawData())
+		releaseStart, _ := molecule.Bytes2GoU64(releaseRule.ReleaseStart().RawData())
+		releaseEnd, _ := molecule.Bytes2GoU64(releaseRule.ReleaseEnd().RawData())
 		releaseRules = append(releaseRules, map[string]interface{}{
-			"length":        common.Bytes2Hex(releaseRule.Length().RawData()),
-			"release_start": common.Bytes2Hex(releaseRule.ReleaseStart().RawData()),
-			"release_end":   common.Bytes2Hex(releaseRule.ReleaseEnd().RawData()),
+			"length":        length,
+			"release_start": releaseStart,
+			"release_end":   releaseEnd,
 		})
 	}
 
@@ -760,27 +925,45 @@ func ParserConfigCellSecondaryMarket(witnessByte []byte) interface{} {
 		return parserDefaultWitness(witnessByte)
 	}
 
+	commonFee, _ := molecule.Bytes2GoU64(configCellSecondaryMarket.CommonFee().RawData())
+	saleMinPrice, _ := molecule.Bytes2GoU64(configCellSecondaryMarket.SaleMinPrice().RawData())
+	saleExpirationLimit, _ := molecule.Bytes2GoU32(configCellSecondaryMarket.SaleExpirationLimit().RawData())
+	saleDescriptionBytesLimit, _ := molecule.Bytes2GoU32(configCellSecondaryMarket.SaleDescriptionBytesLimit().RawData())
+	saleCellBasicCapacity, _ := molecule.Bytes2GoU64(configCellSecondaryMarket.SaleCellBasicCapacity().RawData())
+	saleCellPreparedFeeCapacity, _ := molecule.Bytes2GoU64(configCellSecondaryMarket.SaleCellPreparedFeeCapacity().RawData())
+	auctionMaxExtendableDuration, _ := molecule.Bytes2GoU32(configCellSecondaryMarket.AuctionMaxExtendableDuration().RawData())
+	auctionDurationIncrementEachBid, _ := molecule.Bytes2GoU32(configCellSecondaryMarket.AuctionDurationIncrementEachBid().RawData())
+	auctionMinOpeningPrice, _ := molecule.Bytes2GoU64(configCellSecondaryMarket.AuctionMinOpeningPrice().RawData())
+	auctionMinIncrementRateEachBid, _ := molecule.Bytes2GoU32(configCellSecondaryMarket.AuctionMinIncrementRateEachBid().RawData())
+	auctionDescriptionBytesLimit, _ := molecule.Bytes2GoU32(configCellSecondaryMarket.AuctionDescriptionBytesLimit().RawData())
+	auctionCellBasicCapacity, _ := molecule.Bytes2GoU64(configCellSecondaryMarket.AuctionCellBasicCapacity().RawData())
+	auctionCellPreparedFeeCapacity, _ := molecule.Bytes2GoU64(configCellSecondaryMarket.AuctionCellPreparedFeeCapacity().RawData())
+	offerMinPrice, _ := molecule.Bytes2GoU64(configCellSecondaryMarket.OfferMinPrice().RawData())
+	offerCellBasicCapacity, _ := molecule.Bytes2GoU64(configCellSecondaryMarket.OfferCellBasicCapacity().RawData())
+	offerCellPreparedFeeCapacity, _ := molecule.Bytes2GoU64(configCellSecondaryMarket.OfferCellPreparedFeeCapacity().RawData())
+	offerMessageBytesLimit, _ := molecule.Bytes2GoU32(configCellSecondaryMarket.OfferMessageBytesLimit().RawData())
+
 	return map[string]interface{}{
 		"witness":      common.Bytes2Hex(witnessByte),
 		"witness_hash": common.Bytes2Hex(common.Blake2b(configCellSecondaryMarket.AsSlice())),
 		"ConfigCellSecondaryMarket": map[string]interface{}{
-			"common_fee":                          common.Bytes2Hex(configCellSecondaryMarket.CommonFee().RawData()),
-			"sale_min_price":                      common.Bytes2Hex(configCellSecondaryMarket.SaleMinPrice().RawData()),
-			"sale_expiration_limit":               common.Bytes2Hex(configCellSecondaryMarket.SaleExpirationLimit().RawData()),
-			"sale_description_bytes_limit":        common.Bytes2Hex(configCellSecondaryMarket.SaleDescriptionBytesLimit().RawData()),
-			"sale_cell_basic_capacity":            common.Bytes2Hex(configCellSecondaryMarket.SaleCellBasicCapacity().RawData()),
-			"sale_cell_prepared_fee_capacity":     common.Bytes2Hex(configCellSecondaryMarket.SaleCellPreparedFeeCapacity().RawData()),
-			"auction_max_extendable_duration":     common.Bytes2Hex(configCellSecondaryMarket.AuctionMaxExtendableDuration().RawData()),
-			"auction_duration_increment_each_bid": common.Bytes2Hex(configCellSecondaryMarket.AuctionDurationIncrementEachBid().RawData()),
-			"auction_min_opening_price":           common.Bytes2Hex(configCellSecondaryMarket.AuctionMinOpeningPrice().RawData()),
-			"auction_min_increment_rate_each_bid": common.Bytes2Hex(configCellSecondaryMarket.AuctionMinIncrementRateEachBid().RawData()),
-			"auction_description_bytes_limit":     common.Bytes2Hex(configCellSecondaryMarket.AuctionDescriptionBytesLimit().RawData()),
-			"auction_cell_basic_capacity":         common.Bytes2Hex(configCellSecondaryMarket.AuctionCellBasicCapacity().RawData()),
-			"auction_cell_prepared_fee_capacity":  common.Bytes2Hex(configCellSecondaryMarket.AuctionCellPreparedFeeCapacity().RawData()),
-			"offer_min_price":                     common.Bytes2Hex(configCellSecondaryMarket.OfferMinPrice().RawData()),
-			"offer_cell_basic_capacity":           common.Bytes2Hex(configCellSecondaryMarket.OfferCellBasicCapacity().RawData()),
-			"offer_cell_prepared_fee_capacity":    common.Bytes2Hex(configCellSecondaryMarket.OfferCellPreparedFeeCapacity().RawData()),
-			"offer_message_bytes_limit":           common.Bytes2Hex(configCellSecondaryMarket.OfferMessageBytesLimit().RawData()),
+			"common_fee":                          commonFee,
+			"sale_min_price":                      saleMinPrice,
+			"sale_expiration_limit":               saleExpirationLimit,
+			"sale_description_bytes_limit":        saleDescriptionBytesLimit,
+			"sale_cell_basic_capacity":            saleCellBasicCapacity,
+			"sale_cell_prepared_fee_capacity":     saleCellPreparedFeeCapacity,
+			"auction_max_extendable_duration":     auctionMaxExtendableDuration,
+			"auction_duration_increment_each_bid": auctionDurationIncrementEachBid,
+			"auction_min_opening_price":           auctionMinOpeningPrice,
+			"auction_min_increment_rate_each_bid": auctionMinIncrementRateEachBid,
+			"auction_description_bytes_limit":     auctionDescriptionBytesLimit,
+			"auction_cell_basic_capacity":         auctionCellBasicCapacity,
+			"auction_cell_prepared_fee_capacity":  auctionCellPreparedFeeCapacity,
+			"offer_min_price":                     offerMinPrice,
+			"offer_cell_basic_capacity":           offerCellBasicCapacity,
+			"offer_cell_prepared_fee_capacity":    offerCellPreparedFeeCapacity,
+			"offer_message_bytes_limit":           offerMessageBytesLimit,
 		},
 	}
 }
@@ -791,13 +974,16 @@ func ParserConfigCellReverseRecord(witnessByte []byte) interface{} {
 		return parserDefaultWitness(witnessByte)
 	}
 
+	commonFee, _ := molecule.Bytes2GoU64(configCellReverseRecord.CommonFee().RawData())
+	recordPreparedFeeCapacity, _ := molecule.Bytes2GoU64(configCellReverseRecord.RecordPreparedFeeCapacity().RawData())
+	recordBasicCapacity, _ := molecule.Bytes2GoU64(configCellReverseRecord.RecordBasicCapacity().RawData())
 	return map[string]interface{}{
 		"witness":      common.Bytes2Hex(witnessByte),
 		"witness_hash": common.Bytes2Hex(common.Blake2b(configCellReverseRecord.AsSlice())),
 		"ConfigCellReverseRecord": map[string]interface{}{
-			"common_fee":                   common.Bytes2Hex(configCellReverseRecord.CommonFee().RawData()),
-			"record_prepared_fee_capacity": common.Bytes2Hex(configCellReverseRecord.RecordPreparedFeeCapacity().RawData()),
-			"record_basic_capacity":        common.Bytes2Hex(configCellReverseRecord.RecordBasicCapacity().RawData()),
+			"common_fee":                   commonFee,
+			"record_prepared_fee_capacity": recordPreparedFeeCapacity,
+			"record_basic_capacity":        recordBasicCapacity,
 		},
 	}
 }
