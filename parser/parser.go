@@ -1,62 +1,43 @@
 package parser
 
 import (
-	"context"
 	"das_parser_tool/chain"
 	"das_parser_tool/config"
-	"encoding/json"
 	"github.com/DeAccountSystems/das-lib/common"
 	"github.com/DeAccountSystems/das-lib/core"
 	"github.com/DeAccountSystems/das-lib/witness"
 	"github.com/nervosnetwork/ckb-sdk-go/types"
-	"github.com/scorpiotzh/mylog"
-	"sync"
 )
-
-var log = mylog.NewLogger("transaction_parser", mylog.LevelDebug)
 
 type Parser struct {
 	dasCore   *core.DasCore
 	ckbClient *chain.Client
-	ctx       context.Context
-	wg        *sync.WaitGroup
 }
 
 type ParamsParser struct {
 	DasCore   *core.DasCore
 	CkbClient *chain.Client
-	Ctx       context.Context
-	Wg        *sync.WaitGroup
 }
 
-func NewParser(p ParamsParser) (*Parser, error) {
-	bp := Parser{
+func NewParser(p ParamsParser) *Parser {
+	return &Parser{
 		dasCore:   p.DasCore,
 		ckbClient: p.CkbClient,
-		ctx:       p.Ctx,
-		wg:        p.Wg,
 	}
-	return &bp, nil
 }
 
-func (t *Parser) RunParser(h string) {
-	tx, err := t.ckbClient.GetTransactionByHash(types.HexToHash(h))
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Info("RunParser txHash:", tx.Transaction.Hash)
-	log.Info("RunParser version:", tx.Transaction.Version)
-	log.Info("RunParser status:", tx.TxStatus.Status)
-
+func (t *Parser) HashParser(h string) map[string]interface{} {
+	tx := t.ckbClient.GetTransactionByHash(types.HexToHash(h))
 	// Warn: if you need order json, use ordered map
-	out := map[string]interface{}{}
-	out["cell_deps"] = t.parserCellDeps(tx.Transaction.CellDeps)
-	out["inputs"] = t.parserInputs(tx.Transaction.Inputs)
-	out["outputs"] = t.parserOutputs(tx.Transaction.Outputs, tx.Transaction.OutputsData)
-	out["witnesses"] = t.parserWitnesses(tx.Transaction)
-
-	b, _ := json.Marshal(out)
-	log.Info(string(b))
+	return map[string]interface{}{
+		"hash":      tx.Transaction.Hash.Hex(),
+		"version":   tx.Transaction.Version,
+		"cell_deps": t.parserCellDeps(tx.Transaction.CellDeps),
+		"inputs":    t.parserInputs(tx.Transaction.Inputs),
+		"outputs":   t.parserOutputs(tx.Transaction.Outputs, tx.Transaction.OutputsData),
+		"witnesses": t.parserWitnesses(tx.Transaction),
+		"status":    tx.TxStatus.Status,
+	}
 }
 
 func (t *Parser) parserCellDeps(cellDeps []*types.CellDep) (cellDepsMap []interface{}) {
@@ -73,11 +54,8 @@ func (t *Parser) parserCellDeps(cellDeps []*types.CellDep) (cellDepsMap []interf
 			})
 			continue
 		}
-		res, err := t.ckbClient.GetTransactionByHash(v.OutPoint.TxHash)
-		if err != nil {
-			log.Fatal("GetTransactionByHash err:", err.Error())
-		}
 
+		res := t.ckbClient.GetTransactionByHash(v.OutPoint.TxHash)
 		output := res.Transaction.Outputs[v.OutPoint.Index]
 		if output.Type != nil && output.Type.CodeHash.Hex() == config.Cfg.DasCore.THQCodeHash {
 			switch common.Bytes2Hex(output.Type.Args) {
@@ -134,10 +112,7 @@ func (t *Parser) parserCellDeps(cellDeps []*types.CellDep) (cellDepsMap []interf
 
 func (t *Parser) parserInputs(inputs []*types.CellInput) (inputsMap []interface{}) {
 	for _, v := range inputs {
-		res, err := t.ckbClient.GetTransactionByHash(v.PreviousOutput.TxHash)
-		if err != nil {
-			log.Fatal("GetTransactionByHash err:", err.Error())
-		}
+		res := t.ckbClient.GetTransactionByHash(v.PreviousOutput.TxHash)
 		inputsMap = append(inputsMap, t.parserOutput(res.Transaction.Outputs[v.PreviousOutput.Index], res.Transaction.OutputsData[v.PreviousOutput.Index]))
 	}
 	return

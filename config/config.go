@@ -3,36 +3,42 @@ package config
 import (
 	"fmt"
 	"github.com/DeAccountSystems/das-lib/common"
-	"github.com/scorpiotzh/mylog"
-	"github.com/scorpiotzh/toolib"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
-var (
-	Cfg CfgServer
-	log = mylog.NewLogger("config", mylog.LevelDebug)
-)
+var Cfg CfgServer
 
-func InitCfg(configFilePath string) error {
-	log.Info("read from config:", configFilePath)
-	if err := toolib.UnmarshalYamlFile(configFilePath, &Cfg); err != nil {
-		return fmt.Errorf("UnmarshalYamlFile err:%s", err.Error())
+func InitCfg(cfgFile string) {
+	if cfgFile != "" {
+		viper.SetConfigFile(cfgFile)
+	} else {
+		viper.SetConfigName("config")
+		viper.SetConfigType("yaml")
+		viper.AddConfigPath(".")
+		viper.AddConfigPath("./config")
+		viper.AddConfigPath("../config")
 	}
-	log.Info("config file:", toolib.JsonString(Cfg))
-	return nil
+	if err := viper.ReadInConfig(); err != nil {
+		cobra.CheckErr(fmt.Errorf("ReadInConfig err: %v", err.Error()))
+	}
+	if err := viper.Unmarshal(&Cfg); err != nil {
+		cobra.CheckErr(fmt.Errorf("Unmarshal err: %v ", err.Error()))
+	}
 }
 
 type CfgServer struct {
 	Chain struct {
-		Net      common.DasNetType `json:"net" yaml:"net"`
-		CkbUrl   string            `json:"ckb_url" yaml:"ckb_url"`
-		IndexUrl string            `json:"index_url" yaml:"index_url"`
-	} `json:"chain" yaml:"chain"`
+		Net      common.DasNetType `mapstructure:"net"`
+		CkbUrl   string            `mapstructure:"ckb_url"`
+		IndexUrl string            `mapstructure:"index_url"`
+	} `mapstructure:"chain"`
 	DasCore struct {
-		THQCodeHash         string                            `json:"thq_code_hash" yaml:"thq_code_hash"`
-		DasContractArgs     string                            `json:"das_contract_args" yaml:"das_contract_args"`
-		DasContractCodeHash string                            `json:"das_contract_code_hash" yaml:"das_contract_code_hash"`
-		DasConfigCodeHash   string                            `json:"das_config_code_hash" yaml:"das_config_code_hash"`
-		MapDasContract      map[common.DasContractName]string `json:"map_das_contract" yaml:"map_das_contract"`
-		CellDeps            map[string]string                 `json:"cell_deps" yaml:"cell_deps"`
-	} `json:"das_core" yaml:"das_core"`
+		THQCodeHash         string                            `mapstructure:"thq_code_hash"`
+		DasContractArgs     string                            `mapstructure:"das_contract_args"`
+		DasContractCodeHash string                            `mapstructure:"das_contract_code_hash"`
+		DasConfigCodeHash   string                            `mapstructure:"das_config_code_hash"`
+		MapDasContract      map[common.DasContractName]string `mapstructure:"map_das_contract"`
+		CellDeps            map[string]string                 `mapstructure:"cell_deps"`
+	} `mapstructure:"das_core"`
 }

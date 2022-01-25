@@ -4,82 +4,100 @@ import (
 	"context"
 	"das_parser_tool/chain"
 	"das_parser_tool/config"
+	"das_parser_tool/dascore"
 	"das_parser_tool/parser"
-	"flag"
-	"github.com/DeAccountSystems/das-lib/core"
-	"github.com/scorpiotzh/mylog"
-	"sync"
+	"encoding/json"
+	"fmt"
+	"github.com/DeAccountSystems/das-lib/common"
+	"github.com/DeAccountSystems/das-lib/witness"
+	"github.com/spf13/cobra"
 )
 
 var (
-	log       = mylog.NewLogger("main", mylog.LevelDebug)
-	ctxServer = context.Background()
-	wgServer  = sync.WaitGroup{}
-	dc        *core.DasCore
+	cfgFile  string
+	jsonFile string
+
+	rootCmd = &cobra.Command{
+		Use:   "das_parser_tool",
+		Short: "A tool for das parser Transaction",
+	}
+	versionCmd = &cobra.Command{
+		Use:   "version",
+		Short: "Print the version number of Das parser tool",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Println("Das parser tool v1.0.0 -- HEAD")
+		},
+	}
+	hashCmd = &cobra.Command{
+		Use:   "hash",
+		Short: "Parser transaction by hash",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			for _, v := range args {
+				hashParser(v)
+			}
+		},
+	}
+	witnessCmd = &cobra.Command{
+		Use:   "witness",
+		Short: "Parser transaction by witness",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			for _, v := range args {
+				witnessParser(v)
+			}
+		},
+	}
 )
 
-func main() {
-	c := flag.String("c", "./config/config.yaml", "config file")
-	h := flag.String("t", "", "transaction hash")
-	j := flag.String("j", "", "transaction json")
+func init() {
+	cobra.OnInitialize(initConfig)
 
-	flag.Parse()
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "parser config file (default is ./config/config.yaml)")
+	// TODO parser by transaction json and transaction json file
+	rootCmd.PersistentFlags().StringVar(&jsonFile, "json", "", "Parser transaction by transaction json")
 
-	log.Info(*c, *h, *j)
-	log.Info("----- start tx parser -----")
-	if *h != "" {
-		hashParser(*c, *h)
-	}
-	if *j != "" {
-		jsonParser(*c, *j)
-	}
-	log.Info("----- end tx parser -----")
+	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(hashCmd)
+	rootCmd.AddCommand(witnessCmd)
 }
 
-func hashParser(c, h string) {
-	// config
-	if err := config.InitCfg(c); err != nil {
-		log.Fatal(err)
-	}
+func initConfig() {
+	config.InitCfg(cfgFile)
+}
 
+func hashParser(arg string) {
 	// ckb node
-	ckbClient, err := chain.NewClient(context.Background(), config.Cfg.Chain.CkbUrl, config.Cfg.Chain.IndexUrl)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Info("node ok")
+	ckbClient := chain.NewClient(context.Background(), config.Cfg.Chain.CkbUrl, config.Cfg.Chain.IndexUrl)
 
-	// das contract init
-	opts := []core.DasCoreOption{
-		core.WithClient(ckbClient.Client()),
-		core.WithDasContractArgs(config.Cfg.DasCore.DasContractArgs),
-		core.WithDasContractCodeHash(config.Cfg.DasCore.DasContractCodeHash),
-		core.WithDasNetType(config.Cfg.Chain.Net),
-		core.WithTHQCodeHash(config.Cfg.DasCore.THQCodeHash),
-	}
-	dc = core.NewDasCore(ctxServer, &wgServer, opts...)
-	dc.InitDasContract(config.Cfg.DasCore.MapDasContract)
-	if err = dc.InitDasConfigCell(); err != nil {
-		log.Fatal(err)
-	}
-	if err = dc.InitDasSoScript(); err != nil {
-		log.Fatal(err)
-	}
-	log.Info("contract ok")
+	// contract init
+	dasCore := dascore.NewDasCore(ckbClient.Client())
 
 	// transaction parser
-	bp, err := parser.NewParser(parser.ParamsParser{
-		DasCore:   dc,
+	bp := parser.NewParser(parser.ParamsParser{
+		DasCore:   dasCore,
 		CkbClient: ckbClient,
-		Ctx:       ctxServer,
-		Wg:        &wgServer,
 	})
+	out := bp.HashParser(arg)
+
+	b, err := json.Marshal(out)
 	if err != nil {
-		log.Fatal(err)
+		cobra.CheckErr(fmt.Errorf("Marshal err: %v ", err.Error()))
 	}
-	bp.RunParser(h)
+	fmt.Println(string(b))
 }
 
-func jsonParser(c, j string) {
+func witnessParser(arg string) {
+	witnessByte := common.Hex2Bytes(arg)
+	b, err := json.Marshal(witness.ParserWitnessData(witnessByte))
+	if err != nil {
+		cobra.CheckErr(fmt.Errorf("Marshal err: %v ", err.Error()))
+	}
+	fmt.Println(string(b))
+}
 
+func main() {
+	if err := rootCmd.Execute(); err != nil {
+		cobra.CheckErr(err)
+	}
 }

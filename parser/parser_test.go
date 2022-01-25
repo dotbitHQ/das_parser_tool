@@ -4,58 +4,35 @@ import (
 	"context"
 	"das_parser_tool/chain"
 	"das_parser_tool/config"
-	"github.com/DeAccountSystems/das-lib/core"
-	"sync"
+	"das_parser_tool/dascore"
+	"encoding/json"
+	"fmt"
+	"github.com/spf13/cobra"
 	"testing"
 )
 
-var (
-	ctxServer = context.Background()
-	wgServer  = sync.WaitGroup{}
-	dc        *core.DasCore
-)
-
 func parserHash(h string) {
-	if err := config.InitCfg("../config/config.yaml"); err != nil {
-		log.Fatal(err)
-	}
+	// config
+	config.InitCfg("")
 
 	// ckb node
-	ckbClient, err := chain.NewClient(context.Background(), config.Cfg.Chain.CkbUrl, config.Cfg.Chain.IndexUrl)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Info("node ok")
+	ckbClient := chain.NewClient(context.Background(), config.Cfg.Chain.CkbUrl, config.Cfg.Chain.IndexUrl)
 
 	// das contract init
-	opts := []core.DasCoreOption{
-		core.WithClient(ckbClient.Client()),
-		core.WithDasContractArgs(config.Cfg.DasCore.DasContractArgs),
-		core.WithDasContractCodeHash(config.Cfg.DasCore.DasContractCodeHash),
-		core.WithDasNetType(config.Cfg.Chain.Net),
-		core.WithTHQCodeHash(config.Cfg.DasCore.THQCodeHash),
-	}
-	dc = core.NewDasCore(ctxServer, &wgServer, opts...)
-	dc.InitDasContract(config.Cfg.DasCore.MapDasContract)
-	if err = dc.InitDasConfigCell(); err != nil {
-		log.Fatal(err)
-	}
-	if err = dc.InitDasSoScript(); err != nil {
-		log.Fatal(err)
-	}
-	log.Info("contract ok")
+	dc := dascore.NewDasCore(ckbClient.Client())
 
 	// transaction parser
-	bp, err := NewParser(ParamsParser{
+	bp := NewParser(ParamsParser{
 		DasCore:   dc,
 		CkbClient: ckbClient,
-		Ctx:       ctxServer,
-		Wg:        &wgServer,
 	})
+	out := bp.HashParser(h)
+
+	b, err := json.Marshal(out)
 	if err != nil {
-		log.Fatal(err)
+		cobra.CheckErr(fmt.Errorf("Marshal err: %v ", err.Error()))
 	}
-	bp.RunParser(h)
+	fmt.Println(string(b))
 }
 
 func TestTransferBalance(t *testing.T) {
