@@ -1,6 +1,6 @@
 # github.com/Andrew-M-C/go.emoji v0.0.0-20211011074904-61cf526972e1
 github.com/Andrew-M-C/go.emoji/official
-# github.com/DeAccountSystems/das-lib v0.0.0-20220125061656-647c0bf22303
+# github.com/DeAccountSystems/das-lib v0.0.0-20220126125111-805499ab9a6e
 ## explicit
 github.com/DeAccountSystems/das-lib/common
 github.com/DeAccountSystems/das-lib/core
@@ -126,7 +126,6 @@ github.com/scorpiotzh/toolib
 github.com/shirou/gopsutil/cpu
 github.com/shirou/gopsutil/internal/common
 # github.com/shopspring/decimal v1.3.1
-## explicit
 github.com/shopspring/decimal
 # github.com/spf13/afero v1.6.0
 github.com/spf13/afero

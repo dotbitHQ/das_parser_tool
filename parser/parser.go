@@ -3,13 +3,10 @@ package parser
 import (
 	"das_parser_tool/chain"
 	"das_parser_tool/config"
-	"fmt"
 	"github.com/DeAccountSystems/das-lib/common"
 	"github.com/DeAccountSystems/das-lib/core"
 	"github.com/DeAccountSystems/das-lib/witness"
 	"github.com/nervosnetwork/ckb-sdk-go/types"
-	"github.com/shopspring/decimal"
-	"time"
 )
 
 type Parser struct {
@@ -90,7 +87,7 @@ func (t *Parser) parserCellDep(outpoint *types.OutPoint) interface{} {
 			return map[string]interface{}{
 				"name":      "TimeCell",
 				"cell_dep":  outpoint,
-				"timestamp": time.Unix(cell.Timestamp(), 0).Format("2006-01-02 15:04:05"),
+				"timestamp": witness.ConvertTimestamp(cell.Timestamp()),
 			}
 		case common.ArgsHeightCell:
 			cell, _ := t.dasCore.GetHeightCell()
@@ -191,7 +188,7 @@ func (t *Parser) parserOutput(output *types.CellOutput, outputData []byte) (outp
 
 func (t *Parser) convertOutputLockScript(output *types.CellOutput) map[string]interface{} {
 	return map[string]interface{}{
-		"capacity": t.convertCapacity(output.Capacity),
+		"capacity": witness.ConvertCapacity(output.Capacity),
 		"lock": map[string]interface{}{
 			"code_hash": output.Lock.CodeHash.Hex(),
 			"hash_type": output.Lock.HashType,
@@ -202,7 +199,7 @@ func (t *Parser) convertOutputLockScript(output *types.CellOutput) map[string]in
 
 func (t *Parser) convertOutputTypeScript(output *types.CellOutput) map[string]interface{} {
 	return map[string]interface{}{
-		"capacity": t.convertCapacity(output.Capacity),
+		"capacity": witness.ConvertCapacity(output.Capacity),
 		"lock": map[string]interface{}{
 			"code_hash": output.Lock.CodeHash.Hex(),
 			"hash_type": output.Lock.HashType,
@@ -214,11 +211,6 @@ func (t *Parser) convertOutputTypeScript(output *types.CellOutput) map[string]in
 			"args":      common.Bytes2Hex(output.Type.Args),
 		},
 	}
-}
-
-func (t *Parser) convertCapacity(capacity uint64) interface{} {
-	capacityDec, _ := decimal.NewFromString(fmt.Sprintf("%d", capacity))
-	return capacityDec.DivRound(decimal.NewFromInt(100000000), 8)
 }
 
 func (t *Parser) parserWitnesses(transaction *types.Transaction) (witnessesMap []interface{}) {
