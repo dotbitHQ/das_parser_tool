@@ -125,6 +125,9 @@ github.com/scorpiotzh/toolib
 # github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible
 github.com/shirou/gopsutil/cpu
 github.com/shirou/gopsutil/internal/common
+# github.com/shopspring/decimal v1.3.1
+## explicit
+github.com/shopspring/decimal
 # github.com/spf13/afero v1.6.0
 github.com/spf13/afero
 github.com/spf13/afero/mem
