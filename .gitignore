@@ -16,6 +16,7 @@
 .idea
 bin
 
-# execute file
-das_parser_tool
-das_parser_tool.exe
+# tmp file
+tx_parser
+tx_parser.exe
+tx.json
