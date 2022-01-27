@@ -144,31 +144,40 @@ func convertTransaction(tx Transaction) *types.Transaction {
 	}
 
 	var outputs []*types.CellOutput
-	for _, v := range tx.Outputs {
-		capacity, _ := hexutil.DecodeUint64(v.Capacity)
-		outputs = append(outputs, &types.CellOutput{
-			Capacity: capacity,
-			Lock: &types.Script{
-				CodeHash: types.HexToHash(v.Lock.CodeHash),
-				HashType: types.ScriptHashType(v.Lock.HashType),
-				Args:     common.Hex2Bytes(v.Lock.Args),
-			},
-			Type: &types.Script{
-				CodeHash: types.HexToHash(v.Type.CodeHash),
-				HashType: types.ScriptHashType(v.Type.HashType),
-				Args:     common.Hex2Bytes(v.Type.Args),
-			},
-		})
-	}
-
 	var outputsData [][]byte
-	for _, v := range tx.OutputsData {
-		outputsData = append(outputsData, common.Hex2Bytes(v))
+	for k, v := range tx.Outputs {
+		outputsData = append(outputsData, common.Hex2Bytes(tx.OutputsData[k]))
+		capacity, _ := hexutil.DecodeUint64(v.Capacity)
+		switch v.Type {
+		case nil:
+			outputs = append(outputs, &types.CellOutput{
+				Capacity: capacity,
+				Lock: &types.Script{
+					CodeHash: types.HexToHash(v.Lock.CodeHash),
+					HashType: types.ScriptHashType(v.Lock.HashType),
+					Args:     common.Hex2Bytes(v.Lock.Args),
+				},
+			})
+		default:
+			outputs = append(outputs, &types.CellOutput{
+				Capacity: capacity,
+				Lock: &types.Script{
+					CodeHash: types.HexToHash(v.Lock.CodeHash),
+					HashType: types.ScriptHashType(v.Lock.HashType),
+					Args:     common.Hex2Bytes(v.Lock.Args),
+				},
+				Type: &types.Script{
+					CodeHash: types.HexToHash(v.Type.CodeHash),
+					HashType: types.ScriptHashType(v.Type.HashType),
+					Args:     common.Hex2Bytes(v.Type.Args),
+				},
+			})
+		}
 	}
 
 	var witnesses [][]byte
 	for _, v := range tx.Witnesses {
-		outputsData = append(outputsData, common.Hex2Bytes(v))
+		witnesses = append(witnesses, common.Hex2Bytes(v))
 	}
 
 	return &types.Transaction{
