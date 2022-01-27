@@ -11,6 +11,8 @@ github.com/DeAccountSystems/das-lib/witness
 github.com/StackExchange/wmi
 # github.com/btcsuite/btcutil v0.0.0-20190425235716-9e5f4b9a998d
 github.com/btcsuite/btcutil/base58
+# github.com/cpuguy83/go-md2man/v2 v2.0.1
+github.com/cpuguy83/go-md2man/v2/md2man
 # github.com/deckarep/golang-set v0.0.0-20180603214616-504e848d77ea
 github.com/deckarep/golang-set
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -117,6 +119,8 @@ github.com/nervosnetwork/ckb-sdk-go/utils
 github.com/pelletier/go-toml
 # github.com/pkg/errors v0.9.1
 github.com/pkg/errors
+# github.com/russross/blackfriday/v2 v2.1.0
+github.com/russross/blackfriday/v2
 # github.com/scorpiotzh/mylog v1.0.9
 ## explicit
 github.com/scorpiotzh/mylog
@@ -136,6 +140,7 @@ github.com/spf13/cast
 # github.com/spf13/cobra v1.3.0
 ## explicit
 github.com/spf13/cobra
+github.com/spf13/cobra/doc
 # github.com/spf13/jwalterweatherman v1.1.0
 github.com/spf13/jwalterweatherman
 # github.com/spf13/pflag v1.0.5
