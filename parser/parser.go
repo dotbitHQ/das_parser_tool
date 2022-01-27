@@ -26,8 +26,8 @@ func NewParser(p ParamsParser) *Parser {
 	}
 }
 
-func (t *Parser) HashParser(h string) map[string]interface{} {
-	tx := t.ckbClient.GetTransactionByHash(types.HexToHash(h))
+func (t *Parser) HashParser(hash string) map[string]interface{} {
+	tx := t.ckbClient.GetTransactionByHash(types.HexToHash(hash))
 	// Warn: if you need order json, use ordered map
 	return map[string]interface{}{
 		"hash":      tx.Transaction.Hash.Hex(),
@@ -37,6 +37,17 @@ func (t *Parser) HashParser(h string) map[string]interface{} {
 		"outputs":   t.parserOutputs(tx.Transaction.Outputs, tx.Transaction.OutputsData),
 		"witnesses": t.parserWitnesses(tx.Transaction),
 		"status":    tx.TxStatus.Status,
+	}
+}
+
+func (t *Parser) JsonParser(transaction *types.Transaction) map[string]interface{} {
+	return map[string]interface{}{
+		"hash":      transaction.Hash.Hex(),
+		"version":   transaction.Version,
+		"cell_deps": t.parserCellDeps(transaction.CellDeps),
+		"inputs":    t.parserInputs(transaction.Inputs),
+		"outputs":   t.parserOutputs(transaction.Outputs, transaction.OutputsData),
+		"witnesses": t.parserWitnesses(transaction),
 	}
 }
 
@@ -167,7 +178,7 @@ func (t *Parser) parserOutput(output *types.CellOutput, outputData []byte) (outp
 					"account":    string(outputData[80:]), // Warn: can't convert empty account
 					"id":         common.Bytes2Hex(id),
 					"next":       common.Bytes2Hex(next),
-					"expired_at": expiredAt,
+					"expired_at": witness.ConvertTimestamp(int64(expiredAt)),
 				},
 				"output":      t.convertOutputTypeScript(output),
 				"output_data": common.Bytes2Hex(outputData),

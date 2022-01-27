@@ -25,10 +25,8 @@ var hashCmd = &cobra.Command{
 func hashParser(arg string) {
 	// ckb node
 	ckbClient := chain.NewClient(context.Background(), config.Cfg.Chain.CkbUrl, config.Cfg.Chain.IndexUrl)
-
 	// contract init
 	dasCore := dascore.NewDasCore(ckbClient.Client())
-
 	// transaction parser
 	bp := parser.NewParser(parser.ParamsParser{
 		DasCore:   dasCore,
