@@ -13,7 +13,7 @@ var (
 
 	rootCmd = &cobra.Command{
 		Use:   "tx_parser",
-		Short: "A tool for das parser Transaction",
+		Short: "Command tool for the das parser on the ckb blockchain.",
 	}
 )
 
