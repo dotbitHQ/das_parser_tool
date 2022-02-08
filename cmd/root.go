@@ -35,9 +35,10 @@ func initConfig() {
 
 func Execute() {
 	// Gen markdown files
-	err := doc.GenMarkdownTree(rootCmd, "./doc")
-	if err != nil {
-		cobra.CheckErr(fmt.Errorf("GenMarkdown err: %v ", err.Error()))
+	if _, err := os.Stat("./doc"); err == nil {
+		if err = doc.GenMarkdownTree(rootCmd, "./doc"); err != nil {
+			cobra.CheckErr(fmt.Errorf("GenMarkdown err: %v ", err.Error()))
+		}
 	}
 
 	if err := rootCmd.Execute(); err != nil {
