@@ -11,30 +11,34 @@ import (
 type ChainType int
 
 const (
-	ChainTypeCkb  ChainType = 0
-	ChainTypeEth  ChainType = 1
-	ChainTypeBtc  ChainType = 2
-	ChainTypeTron ChainType = 3
+	ChainTypeCkb   ChainType = 0
+	ChainTypeEth   ChainType = 1
+	ChainTypeBtc   ChainType = 2
+	ChainTypeTron  ChainType = 3
+	ChainTypeMixin ChainType = 4
 
-	HexPreFix           = "0x"
-	TronPreFix          = "41"
-	TronBase58PreFix    = "T"
-	DasLockCkbPreFix    = "00"
-	DasLockEthPreFix    = "03"
-	DasLockTronPreFix   = "04"
-	DasLockEth712PreFix = "05"
+	HexPreFix            = "0x"
+	TronPreFix           = "41"
+	TronBase58PreFix     = "T"
+	DasLockCkbPreFix     = "00"
+	DasLockEthPreFix     = "03"
+	DasLockTronPreFix    = "04"
+	DasLockEth712PreFix  = "05"
+	DasLockEd25519PreFix = "06"
 )
 
 const (
-	TronMessageHeader = "\x19TRON Signed Message:\n%d"
-	EthMessageHeader  = "\x19Ethereum Signed Message:\n%d"
+	TronMessageHeader    = "\x19TRON Signed Message:\n%d"
+	EthMessageHeader     = "\x19Ethereum Signed Message:\n%d"
+	Ed25519MessageHeader = "\x18Ed25519 Signed Message:\n%d"
 )
 
 const (
-	DasAccountSuffix = ".bit"
-	DasLockArgsLen   = 42
-	DasAccountIdLen  = 20
-	HashBytesLen     = 32
+	DasAccountSuffix  = ".bit"
+	DasLockArgsLen    = 42
+	DasLockArgsLenMax = 66
+	DasAccountIdLen   = 20
+	HashBytesLen      = 32
 
 	ExpireTimeLen    = 8
 	NextAccountIdLen = 20
@@ -54,6 +58,8 @@ func (c ChainType) String() string {
 		return "ETH"
 	case ChainTypeTron:
 		return "TRON"
+	case ChainTypeMixin:
+		return "MIXIN"
 	}
 	return ""
 }
