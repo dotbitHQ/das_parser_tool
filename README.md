@@ -10,10 +10,16 @@ To compile parse tool is simple, it's only requires GO version 1.15 or above.
 - The second step is to download the dependency libraries required for compilation.
 - The third step is to compile the parse tool binary executable.
 
+execute file have three os type, it is linux, macOS, windows.
+
 ```shell
 git clone https://github.com/DeAccountSystems/das_parser_tool.git
 make update
-make tx_parser
+make default
+
+make tx_parser_linux
+make tx_parser_mac
+make tx_parser_win
 ```
 
 **Note** You can put the executable in a system variable so that you don't need to enter the relative path of the
