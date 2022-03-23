@@ -1,6 +1,6 @@
 # github.com/Andrew-M-C/go.emoji v0.0.0-20211011074904-61cf526972e1
 github.com/Andrew-M-C/go.emoji/official
-# github.com/DeAccountSystems/das-lib v0.0.0-20220314090719-b2a743f77dab
+# github.com/DeAccountSystems/das-lib v0.0.0-20220322103838-ba1e9cc4bd9c
 ## explicit
 github.com/DeAccountSystems/das-lib/common
 github.com/DeAccountSystems/das-lib/core
@@ -11,8 +11,6 @@ github.com/DeAccountSystems/das-lib/witness
 github.com/StackExchange/wmi
 # github.com/btcsuite/btcutil v0.0.0-20190425235716-9e5f4b9a998d
 github.com/btcsuite/btcutil/base58
-# github.com/cpuguy83/go-md2man/v2 v2.0.1
-github.com/cpuguy83/go-md2man/v2/md2man
 # github.com/deckarep/golang-set v1.8.0
 github.com/deckarep/golang-set
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -119,8 +117,6 @@ github.com/nervosnetwork/ckb-sdk-go/utils
 github.com/pelletier/go-toml
 # github.com/pkg/errors v0.9.1
 github.com/pkg/errors
-# github.com/russross/blackfriday/v2 v2.1.0
-github.com/russross/blackfriday/v2
 # github.com/scorpiotzh/mylog v1.0.9
 ## explicit
 github.com/scorpiotzh/mylog
@@ -140,7 +136,6 @@ github.com/spf13/cast
 # github.com/spf13/cobra v1.3.0
 ## explicit
 github.com/spf13/cobra
-github.com/spf13/cobra/doc
 # github.com/spf13/jwalterweatherman v1.1.0
 github.com/spf13/jwalterweatherman
 # github.com/spf13/pflag v1.0.5

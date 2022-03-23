@@ -132,5 +132,5 @@ func TestRetractReverseRecord(t *testing.T) {
 }
 
 func TestConfigCellRelease(t *testing.T) {
-	parserHash("0x53d077fe2f29027f29985a54c2514f1978b5a37167113f9908289cbf3d2761ac")
+	parserHash("0x3a7561f9965bc5a0027ab7501d2999443d2c8e45b0897e202f420916e439de8d")
 }
