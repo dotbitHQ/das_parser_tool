@@ -4,7 +4,6 @@ import (
 	"das_parser_tool/config"
 	"fmt"
 	"github.com/spf13/cobra"
-	"github.com/spf13/cobra/doc"
 	"os"
 )
 
@@ -35,11 +34,11 @@ func initConfig() {
 
 func Execute() {
 	// Gen markdown files
-	if _, err := os.Stat("./doc"); err == nil {
-		if err = doc.GenMarkdownTree(rootCmd, "./doc"); err != nil {
-			cobra.CheckErr(fmt.Errorf("GenMarkdown err: %v ", err.Error()))
-		}
-	}
+	//if _, err := os.Stat("./doc"); err == nil {
+	//	if err = doc.GenMarkdownTree(rootCmd, "./doc"); err != nil {
+	//		cobra.CheckErr(fmt.Errorf("GenMarkdown err: %v ", err.Error()))
+	//	}
+	//}
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
