@@ -3,7 +3,7 @@ GO_BUILD=go build -ldflags -s -v
 BINARY_NAME=tx_parser
 
 update:
-	export GOPRIVATE="github.com/DeAccountSystems"
+	export GOPRIVATE="github.com/dotbitHQ"
 	go mod tidy
 	go mod vendor
 
