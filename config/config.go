@@ -39,6 +39,5 @@ type CfgServer struct {
 		DasContractCodeHash string                            `mapstructure:"das_contract_code_hash"`
 		DasConfigCodeHash   string                            `mapstructure:"das_config_code_hash"`
 		MapDasContract      map[common.DasContractName]string `mapstructure:"map_das_contract"`
-		CellDeps            map[string]string                 `mapstructure:"cell_deps"`
 	} `mapstructure:"das_core"`
 }

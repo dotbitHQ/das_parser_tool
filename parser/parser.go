@@ -3,10 +3,12 @@ package parser
 import (
 	"das_parser_tool/chain"
 	"das_parser_tool/config"
+	"fmt"
 	"github.com/DeAccountSystems/das-lib/common"
 	"github.com/DeAccountSystems/das-lib/core"
 	"github.com/DeAccountSystems/das-lib/witness"
 	"github.com/nervosnetwork/ckb-sdk-go/types"
+	"strings"
 )
 
 type Parser struct {
@@ -51,7 +53,16 @@ func (t *Parser) JsonParser(transaction *types.Transaction) map[string]interface
 	}
 }
 
+var soScriptType = []common.SoScriptType{common.SoScriptTypeEth, common.SoScriptTypeTron, common.SoScriptTypeCkb, common.SoScriptTypeCkbMulti, common.SoScriptTypeEd25519}
+var soScriptMap = map[string]string{}
+
 func (t *Parser) parserCellDeps(cellDeps []*types.CellDep) (cellDepsMap []interface{}) {
+	for _, soScriptName := range soScriptType {
+		soScript, _ := core.GetDasSoScript(soScriptName)
+		if soScript != nil {
+			soScriptMap[soScript.OutPoint.TxHash.String()] = fmt.Sprintf("%s-lib", strings.ToLower(string(soScriptName)))
+		}
+	}
 	for _, v := range cellDeps {
 		if v.DepType == types.DepTypeDepGroup {
 			cellDepsMap = append(cellDepsMap, map[string]interface{}{
@@ -60,7 +71,7 @@ func (t *Parser) parserCellDeps(cellDeps []*types.CellDep) (cellDepsMap []interf
 			})
 			continue
 		}
-		if cellDep, ok := config.Cfg.DasCore.CellDeps[v.OutPoint.TxHash.String()]; ok {
+		if cellDep, ok := soScriptMap[v.OutPoint.TxHash.String()]; ok {
 			cellDepsMap = append(cellDepsMap, map[string]interface{}{
 				"name":     cellDep,
 				"cell_dep": v.OutPoint,

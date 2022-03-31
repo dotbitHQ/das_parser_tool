@@ -36,7 +36,7 @@ func parserHash(h string) {
 }
 
 func TestTransferBalance(t *testing.T) {
-	parserHash("0x072a302f9563e557bad9969514df671fe9d0f7253c6e471da3f3d99bb56779f6")
+	parserHash("0xeb4a0ac7582277bef6df42e06a7d0efd6d24a11cb362b9dc2fee1da0fafa8228")
 }
 
 func TestWithdrawFromWallet(t *testing.T) {
