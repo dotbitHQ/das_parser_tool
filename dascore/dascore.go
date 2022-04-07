@@ -18,15 +18,16 @@ var (
 
 func NewDasCore(client rpc.Client) *core.DasCore {
 	core.SetLogLevel(mylog.LevelError)
+	config.Env = core.InitEnv(config.Cfg.Chain.Net)
 	opts := []core.DasCoreOption{
 		core.WithClient(client),
-		core.WithDasContractArgs(config.Cfg.DasCore.DasContractArgs),
-		core.WithDasContractCodeHash(config.Cfg.DasCore.DasContractCodeHash),
+		core.WithDasContractArgs(config.Env.ContractArgs),
+		core.WithDasContractCodeHash(config.Env.ContractCodeHash),
 		core.WithDasNetType(config.Cfg.Chain.Net),
-		core.WithTHQCodeHash(config.Cfg.DasCore.THQCodeHash),
+		core.WithTHQCodeHash(config.Env.THQCodeHash),
 	}
 	dc := core.NewDasCore(ctxServer, &wgServer, opts...)
-	dc.InitDasContract(config.Cfg.DasCore.MapDasContract)
+	dc.InitDasContract(config.Env.MapContract)
 	if err := dc.InitDasConfigCell(); err != nil {
 		cobra.CheckErr(fmt.Errorf("InitDasConfigCell err: %v", err))
 	}

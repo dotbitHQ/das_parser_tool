@@ -3,11 +3,13 @@ package config
 import (
 	"fmt"
 	"github.com/DeAccountSystems/das-lib/common"
+	"github.com/DeAccountSystems/das-lib/core"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 var Cfg CfgServer
+var Env core.Env
 
 func InitCfg(cfgFile string) {
 	if cfgFile != "" {
@@ -33,11 +35,4 @@ type CfgServer struct {
 		CkbUrl   string            `mapstructure:"ckb_url"`
 		IndexUrl string            `mapstructure:"index_url"`
 	} `mapstructure:"chain"`
-	DasCore struct {
-		THQCodeHash         string                            `mapstructure:"thq_code_hash"`
-		DasContractArgs     string                            `mapstructure:"das_contract_args"`
-		DasContractCodeHash string                            `mapstructure:"das_contract_code_hash"`
-		DasConfigCodeHash   string                            `mapstructure:"das_config_code_hash"`
-		MapDasContract      map[common.DasContractName]string `mapstructure:"map_das_contract"`
-	} `mapstructure:"das_core"`
 }

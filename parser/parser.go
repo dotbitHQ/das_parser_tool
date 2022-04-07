@@ -93,9 +93,14 @@ func (t *Parser) parserCellDep(outpoint *types.OutPoint) interface{} {
 			"cell_dep": outpoint,
 		}
 	}
+	configCodeHash := common.ScriptToTypeId(&types.Script{
+		CodeHash: types.HexToHash(config.Env.ContractCodeHash),
+		HashType: types.HashTypeType,
+		Args:     common.Hex2Bytes(config.Env.MapContract[common.DasContractNameConfigCellType]),
+	})
 
 	switch output.Type.CodeHash.Hex() {
-	case config.Cfg.DasCore.THQCodeHash:
+	case config.Env.THQCodeHash:
 		switch common.Bytes2Hex(output.Type.Args) {
 		case common.ArgsQuoteCell:
 			cell, _ := t.dasCore.GetQuoteCell()
@@ -119,8 +124,8 @@ func (t *Parser) parserCellDep(outpoint *types.OutPoint) interface{} {
 				"block_number": cell.BlockNumber(),
 			}
 		}
-	case config.Cfg.DasCore.DasContractCodeHash:
-		script := common.GetScript(config.Cfg.DasCore.DasContractCodeHash, common.Bytes2Hex(output.Type.Args))
+	case config.Env.ContractCodeHash:
+		script := common.GetScript(config.Env.ContractCodeHash, common.Bytes2Hex(output.Type.Args))
 		if contractName, ok := core.DasContractByTypeIdMap[common.ScriptToTypeId(script).String()]; ok {
 			return map[string]interface{}{
 				"name":     string(contractName),
@@ -128,7 +133,7 @@ func (t *Parser) parserCellDep(outpoint *types.OutPoint) interface{} {
 				"output":   t.convertOutputTypeScript(output),
 			}
 		}
-	case config.Cfg.DasCore.DasConfigCodeHash:
+	case configCodeHash.String():
 		if value, ok := core.DasConfigCellMap.Load(common.Bytes2Hex(output.Type.Args)); ok {
 			return map[string]interface{}{
 				"name":         value.(*core.DasConfigCellInfo).Name,
