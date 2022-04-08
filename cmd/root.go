@@ -25,6 +25,7 @@ func init() {
 	rootCmd.AddCommand(hashCmd)
 	rootCmd.AddCommand(witnessCmd)
 	rootCmd.AddCommand(jsonCmd)
+	rootCmd.AddCommand(argsCmd)
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 }
 

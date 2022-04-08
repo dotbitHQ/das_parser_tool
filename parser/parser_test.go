@@ -7,7 +7,11 @@ import (
 	"das_parser_tool/dascore"
 	"encoding/json"
 	"fmt"
+	"github.com/DeAccountSystems/das-lib/common"
+	"github.com/DeAccountSystems/das-lib/core"
+	"github.com/DeAccountSystems/das-lib/witness"
 	"github.com/spf13/cobra"
+	"strings"
 	"testing"
 )
 
@@ -133,4 +137,51 @@ func TestRetractReverseRecord(t *testing.T) {
 
 func TestConfigCellRelease(t *testing.T) {
 	parserHash("0x53d077fe2f29027f29985a54c2514f1978b5a37167113f9908289cbf3d2761ac")
+}
+
+func parserArgs(a string) {
+	// config
+	config.InitCfg("")
+
+	// ckb node
+	ckbClient := chain.NewClient(context.Background(), config.Cfg.Chain.CkbUrl, config.Cfg.Chain.IndexUrl)
+
+	// das contract init
+	_ = dascore.NewDasCore(ckbClient.Client())
+
+	// config cell parser
+	configCell, err := core.GetDasConfigCellInfo(a)
+	if err != nil {
+		cobra.CheckErr(fmt.Errorf("GetDasConfigCellInfo err: %s", err.Error()))
+	}
+
+	res := ckbClient.GetTransactionByHash(configCell.OutPoint.TxHash)
+	var witnessByte []byte
+	fmt.Println(strings.Repeat("-", 100))
+	for _, v := range res.Transaction.Witnesses {
+		actionDataType := witness.ParserWitnessAction(v)
+		if actionDataType == a {
+			witnessByte = v
+			break
+		}
+	}
+
+	out := witness.ParserWitnessData(witnessByte)
+	b, err := json.Marshal(out)
+	if err != nil {
+		cobra.CheckErr(fmt.Errorf("Marshal err: %v ", err.Error()))
+	}
+	fmt.Println(string(b))
+}
+
+func TestParserArgs(t *testing.T) {
+	parserArgs(common.ConfigCellTypeArgsAccount)
+	parserArgs(common.ConfigCellTypeArgsMain)
+	parserArgs(common.ConfigCellTypeArgsSubAccount)
+
+	parserArgs(common.ConfigCellTypeArgsPreservedAccount00)
+	parserArgs(common.ConfigCellTypeArgsPreservedAccount19)
+
+	parserArgs(common.ConfigCellTypeArgsCharSetEmoji)
+	parserArgs(common.ConfigCellTypeArgsCharSetHanT)
 }
