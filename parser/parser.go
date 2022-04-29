@@ -53,7 +53,7 @@ func (t *Parser) JsonParser(transaction *types.Transaction) map[string]interface
 	}
 }
 
-var soScriptType = []common.SoScriptType{common.SoScriptTypeEth, common.SoScriptTypeTron, common.SoScriptTypeCkb, common.SoScriptTypeCkbMulti, common.SoScriptTypeEd25519}
+var soScriptType = []common.SoScriptType{common.SoScriptTypeEth, common.SoScriptTypeTron, common.SoScriptTypeCkbSingle, common.SoScriptTypeCkbMulti, common.SoScriptTypeEd25519}
 
 func (t *Parser) parserCellDeps(cellDeps []*types.CellDep) (cellDepsMap []interface{}) {
 	var soScriptMap = map[string]string{}
