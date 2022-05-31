@@ -3,7 +3,7 @@ module das_parser_tool
 go 1.15
 
 require (
-	github.com/DeAccountSystems/das-lib v0.0.0-20220521054800-405337d6cdfa
+	github.com/DeAccountSystems/das-lib v0.0.0-20220531040850-ea68b195348f
 	github.com/ethereum/go-ethereum v1.10.17
 	github.com/nervosnetwork/ckb-sdk-go v0.101.5
 	github.com/scorpiotzh/mylog v1.0.9
