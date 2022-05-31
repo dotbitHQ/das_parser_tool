@@ -1,13 +1,12 @@
 module das_parser_tool
 
-go 1.15
+go 1.16
 
 require (
 	github.com/DeAccountSystems/das-lib v0.0.0-20220531040850-ea68b195348f
-	github.com/ethereum/go-ethereum v1.10.17
-	github.com/nervosnetwork/ckb-sdk-go v0.101.5
+	github.com/ethereum/go-ethereum v1.10.18
+	github.com/nervosnetwork/ckb-sdk-go v1.0.4
 	github.com/scorpiotzh/mylog v1.0.9
-	github.com/scorpiotzh/toolib v1.1.3
-	github.com/spf13/cobra v1.3.0
-	github.com/spf13/viper v1.10.1
+	github.com/spf13/cobra v1.4.0
+	github.com/spf13/viper v1.12.0
 )
