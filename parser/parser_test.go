@@ -185,3 +185,23 @@ func TestParserArgs(t *testing.T) {
 	parserArgs(common.ConfigCellTypeArgsCharSetEmoji)
 	parserArgs(common.ConfigCellTypeArgsCharSetHanT)
 }
+
+func TestEnableSubAccount(t *testing.T) {
+	parserHash("0xd72ab7cd90fc30337663a60f1809888dc0277f7409b28721cb33079225fada53")
+}
+
+func TestCreateSubAccount(t *testing.T) {
+	parserHash("0xf8d4a5466e7c9942699664fc133ff63ff79dbcc5819c2c81cd14db83102ca23b")
+}
+
+func TestEditSubAccount(t *testing.T) {
+	parserHash("0x95730a147d07031ce8240cb8ff760172f280604598bdfcb05c09fc1840de39bc")
+}
+
+func TestLockAccountForCrossChain(t *testing.T) {
+	parserHash("0x70064f9f4d9bd3850dc34d99abaca1b659e7055939eb53c9c5ed51ece74b25e0")
+}
+
+func TestUnlockAccountForCrossChain(t *testing.T) {
+	parserHash("0x42d8f70429b46a742c3511f9914cd698e3c963ba456a9a7a2bea56dd76f9a818")
+}
