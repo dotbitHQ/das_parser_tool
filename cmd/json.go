@@ -102,10 +102,10 @@ func jsonParser(arg []byte) {
 	// contract init
 	dasCore := dascore.NewDasCore(ckbClient.Client())
 	// transaction parser
-	bp := parser.NewParser(parser.ParamsParser{
-		DasCore:   dasCore,
+	bp := parser.Parser{
 		CkbClient: ckbClient,
-	})
+		DasCore:   dasCore,
+	}
 	transaction := convertTransaction(tx)
 	out := bp.JsonParser(transaction)
 

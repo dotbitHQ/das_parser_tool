@@ -28,10 +28,10 @@ func hashParser(arg string) {
 	// contract init
 	dasCore := dascore.NewDasCore(ckbClient.Client())
 	// transaction parser
-	bp := parser.NewParser(parser.ParamsParser{
-		DasCore:   dasCore,
+	bp := parser.Parser{
 		CkbClient: ckbClient,
-	})
+		DasCore:   dasCore,
+	}
 	out := bp.HashParser(arg)
 
 	b, err := json.Marshal(out)

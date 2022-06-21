@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/nervosnetwork/ckb-sdk-go/rpc"
+	"github.com/nervosnetwork/ckb-sdk-go/types"
 	"github.com/spf13/cobra"
 )
 
@@ -29,4 +30,12 @@ func NewClient(ctx context.Context, ckbUrl, indexerUrl string) *Client {
 
 func (c *Client) Client() rpc.Client {
 	return c.client
+}
+
+func (c *Client) GetTransactionByHash(hash types.Hash) *types.TransactionWithStatus {
+	res, err := c.client.GetTransaction(c.ctx, hash)
+	if err != nil {
+		cobra.CheckErr(fmt.Errorf("GetTransaction err: %v", err.Error()))
+	}
+	return res
 }

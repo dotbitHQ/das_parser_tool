@@ -12,24 +12,12 @@ import (
 )
 
 type Parser struct {
-	dasCore   *core.DasCore
-	ckbClient *chain.Client
-}
-
-type ParamsParser struct {
-	DasCore   *core.DasCore
 	CkbClient *chain.Client
-}
-
-func NewParser(p ParamsParser) *Parser {
-	return &Parser{
-		dasCore:   p.DasCore,
-		ckbClient: p.CkbClient,
-	}
+	DasCore   *core.DasCore
 }
 
 func (t *Parser) HashParser(hash string) map[string]interface{} {
-	tx := t.ckbClient.GetTransactionByHash(types.HexToHash(hash))
+	tx := t.CkbClient.GetTransactionByHash(types.HexToHash(hash))
 	// Warn: if you need order json, use ordered map
 	return map[string]interface{}{
 		"hash":      tx.Transaction.Hash.Hex(),
@@ -85,7 +73,7 @@ func (t *Parser) parserCellDeps(cellDeps []*types.CellDep) (cellDepsMap []interf
 }
 
 func (t *Parser) parserCellDep(outpoint *types.OutPoint) interface{} {
-	res := t.ckbClient.GetTransactionByHash(outpoint.TxHash)
+	res := t.CkbClient.GetTransactionByHash(outpoint.TxHash)
 	output := res.Transaction.Outputs[outpoint.Index]
 	if output.Type == nil {
 		return map[string]interface{}{
@@ -103,21 +91,21 @@ func (t *Parser) parserCellDep(outpoint *types.OutPoint) interface{} {
 	case config.Env.THQCodeHash:
 		switch common.Bytes2Hex(output.Type.Args) {
 		case common.ArgsQuoteCell:
-			cell, _ := t.dasCore.GetQuoteCell()
+			cell, _ := t.DasCore.GetQuoteCell()
 			return map[string]interface{}{
 				"name":     "QuoteCell",
 				"cell_dep": outpoint,
 				"quote":    cell.Quote(),
 			}
 		case common.ArgsTimeCell:
-			cell, _ := t.dasCore.GetTimeCell()
+			cell, _ := t.DasCore.GetTimeCell()
 			return map[string]interface{}{
 				"name":      "TimeCell",
 				"cell_dep":  outpoint,
 				"timestamp": witness.ConvertTimestamp(cell.Timestamp()),
 			}
 		case common.ArgsHeightCell:
-			cell, _ := t.dasCore.GetHeightCell()
+			cell, _ := t.DasCore.GetHeightCell()
 			return map[string]interface{}{
 				"name":         "HeightCell",
 				"cell_dep":     outpoint,
@@ -160,7 +148,7 @@ func (t *Parser) parserCellDep(outpoint *types.OutPoint) interface{} {
 
 func (t *Parser) parserInputs(inputs []*types.CellInput) (inputsMap []interface{}) {
 	for _, v := range inputs {
-		res := t.ckbClient.GetTransactionByHash(v.PreviousOutput.TxHash)
+		res := t.CkbClient.GetTransactionByHash(v.PreviousOutput.TxHash)
 		inputsMap = append(inputsMap, t.parserOutput(res.Transaction.Outputs[v.PreviousOutput.Index], res.Transaction.OutputsData[v.PreviousOutput.Index]))
 	}
 	return
