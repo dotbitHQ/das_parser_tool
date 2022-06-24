@@ -4,7 +4,7 @@ import (
 	"context"
 	"das_parser_tool/config"
 	"fmt"
-	"github.com/DeAccountSystems/das-lib/core"
+	"github.com/dotbitHQ/das-lib/core"
 	"github.com/nervosnetwork/ckb-sdk-go/rpc"
 	"github.com/scorpiotzh/mylog"
 	"github.com/spf13/cobra"

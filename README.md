@@ -13,7 +13,7 @@ To compile parse tool is simple, it's only requires GO version 1.15 or above.
 execute file have three os type, it is linux, macOS, windows.
 
 ```shell
-git clone https://github.com/DeAccountSystems/das_parser_tool.git
+git clone https://github.com/dotbitHQ/das_parser_tool.git
 make update
 make default
 
