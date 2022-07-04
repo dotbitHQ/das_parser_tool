@@ -5,7 +5,6 @@ BINARY_NAME=tx_parser
 update:
 	export GOPRIVATE="github.com/dotbitHQ"
 	go mod tidy
-	go mod vendor
 
 tx_parser_linux:
 	export GOOS=linux
