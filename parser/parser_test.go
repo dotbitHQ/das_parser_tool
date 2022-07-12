@@ -211,7 +211,7 @@ func TestConfigSubAccountCreatingScript(t *testing.T) {
 }
 
 func TestRecycleExpiredAccount(t *testing.T) {
-	parserHash("0xdaa0e66a9ff150986e0c433ca315b37c20e40926c73aeecf3eb2c9a434f781f3")
+	parserHash("0x166a0d5cea9e1720be9b390d65f6dff6b0c40720799f9b9705e790471dff7014")
 }
 
 func TestCompatibleWitnessParser(t *testing.T) {

@@ -173,16 +173,31 @@ func (t *Parser) parserOutput(output *types.CellOutput, outputData []byte) (outp
 	if contractName, ok := core.DasContractByTypeIdMap[output.Type.CodeHash.Hex()]; ok {
 		switch string(contractName) {
 		case "account-cell-type":
+			witnessHash, _ := common.OutputDataToSMTRoot(outputData)
 			id, _ := common.OutputDataToAccountId(outputData)
 			next, _ := common.GetAccountCellNextAccountIdFromOutputData(outputData)
 			expiredAt, _ := common.GetAccountCellExpiredAtFromOutputData(outputData)
 			return map[string]interface{}{
 				"name": string(contractName),
 				"output_account": map[string]interface{}{
-					"account":    string(outputData[80:]), // Warn: can't convert empty account
-					"id":         common.Bytes2Hex(id),
-					"next":       common.Bytes2Hex(next),
-					"expired_at": witness.ConvertTimestamp(int64(expiredAt)),
+					"witness_hash": common.Bytes2Hex(witnessHash),
+					"id":           common.Bytes2Hex(id),
+					"next":         common.Bytes2Hex(next),
+					"expired_at":   witness.ConvertTimestamp(int64(expiredAt)),
+					"account":      string(outputData[80:]), // Warn: can't convert empty account
+				},
+				"output":      t.convertOutputTypeScript(output),
+				"output_data": common.Bytes2Hex(outputData),
+			}
+		case "sub-account-cell-type":
+			detail := witness.ConvertSubAccountCellOutputData(outputData)
+			return map[string]interface{}{
+				"name": string(contractName),
+				"output_detail": map[string]interface{}{
+					"smt_root":           common.Bytes2Hex(detail.SmtRoot),
+					"das_profit":         witness.ConvertCapacity(detail.DasProfit),
+					"owner_profit":       witness.ConvertCapacity(detail.OwnerProfit),
+					"custom_script_args": common.Bytes2Hex(detail.CustomScriptArgs),
 				},
 				"output":      t.convertOutputTypeScript(output),
 				"output_data": common.Bytes2Hex(outputData),
