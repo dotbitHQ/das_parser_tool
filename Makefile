@@ -3,7 +3,6 @@ GO_BUILD=go build -ldflags -s -v
 BINARY_NAME=tx_parser
 
 update:
-	#export GOPRIVATE="github.com/dotbitHQ"
 	go mod tidy
 
 tx_parser_linux:
