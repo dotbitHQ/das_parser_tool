@@ -97,8 +97,8 @@ github.com/decred/dcrd/crypto/blake256 v1.0.0/go.mod h1:sQl2p6Y26YV+ZOcSTP6thNdn
 github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 h1:YLtO71vCjJRCBcrPMtQ9nqBsqpA1m5sE92cU+pd5Mcc=
 github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1/go.mod h1:hyedUtir6IdtD/7lIxGeCxkaw7y45JueMRL4DIyJDKs=
 github.com/decred/dcrd/lru v1.0.0/go.mod h1:mxKOwFd7lFjN2GZYsiz/ecgqR6kkYAl+0pz0tEMk218=
-github.com/dotbitHQ/das-lib v1.2.1-0.20240729072102-cc0975ad3f25 h1:IkDvQB4cqzmf/8WGaoIUjBrJxH4HTohAWlYQVZt2Xc8=
-github.com/dotbitHQ/das-lib v1.2.1-0.20240729072102-cc0975ad3f25/go.mod h1:WgHO3ZBtA0JY3l5N2gqssPxwvzoRYf4JKpQT6zyLH4s=
+github.com/dotbitHQ/das-lib v1.2.1-0.20240822060625-4e7afa931e67 h1:DVBGzVMAcZy/a2ytwcaFYhkA/DMka7RBbkv9Pmtz1Ag=
+github.com/dotbitHQ/das-lib v1.2.1-0.20240822060625-4e7afa931e67/go.mod h1:WgHO3ZBtA0JY3l5N2gqssPxwvzoRYf4JKpQT6zyLH4s=
 github.com/elazarl/goproxy v0.0.0-20221015165544-a0805db90819 h1:RIB4cRk+lBqKK3Oy0r2gRX4ui7tuhiZq2SuTtTCi0/0=
 github.com/envoyproxy/go-control-plane v0.9.0/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/go-control-plane v0.9.1-0.20191026205805-5f8ba28d4473/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
